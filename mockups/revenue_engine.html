@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Engine - CEO Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 600;
+        }
+        
+        .header-stats {
+            display: flex;
+            gap: 40px;
+        }
+        
+        .header-stat {
+            text-align: center;
+        }
+        
+        .header-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .header-stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .sales-funnel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .funnel-stage {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .funnel-stage:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .funnel-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .funnel-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 1s ease;
+        }
+        
+        .conversion-rates {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .conversion-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f3f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .conversion-arrow {
+            color: #6c757d;
+            margin: 0 10px;
+        }
+        
+        .rate-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .rate-up {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .rate-down {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .rate-neutral {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .revenue-segment {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        
+        .segment-bar {
+            flex: 1;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 0 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .segment-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .metrics-highlight {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        
+        .metric-highlight {
+            flex: 1;
+        }
+        
+        .metric-highlight-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .metric-highlight-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .lead-source-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        
+        .source-bar {
+            width: 150px;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 15px;
+        }
+        
+        .source-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        h3 {
+            margin-bottom: 20px;
+            color: #495057;
+            font-size: 18px;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <h1>REVENUE ENGINE</h1>
+            <div class="header-stats">
+                <div class="header-stat">
+                    <div class="header-stat-value">$2.4M</div>
+                    <div class="header-stat-label">Pipeline Value</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-value">47 days</div>
+                    <div class="header-stat-label">Sales Velocity</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-value">24%</div>
+                    <div class="header-stat-label">Win Rate</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Main Grid -->
+            <div class="main-grid">
+                <!-- Sales Funnel -->
+                <div class="sales-funnel">
+                    <h3>Sales Funnel</h3>
+                    
+                    <div class="funnel-stage">
+                        <div>
+                            <div style="font-weight: 600;">Leads</div>
+                            <div style="font-size: 24px; color: #667eea;">2,847</div>
+                        </div>
+                        <div style="color: #6c757d;">100%</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-fill" style="width: 100%"></div>
+                    </div>
+                    
+                    <div class="funnel-stage">
+                        <div>
+                            <div style="font-weight: 600;">MQLs</div>
+                            <div style="font-size: 24px; color: #667eea;">973</div>
+                        </div>
+                        <div style="color: #6c757d;">34.2%</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-fill" style="width: 34.2%"></div>
+                    </div>
+                    
+                    <div class="funnel-stage">
+                        <div>
+                            <div style="font-weight: 600;">SQLs</div>
+                            <div style="font-size: 24px; color: #667eea;">659</div>
+                        </div>
+                        <div style="color: #6c757d;">23.1%</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-fill" style="width: 23.1%"></div>
+                    </div>
+                    
+                    <div class="funnel-stage">
+                        <div>
+                            <div style="font-weight: 600;">Opportunities</div>
+                            <div style="font-size: 24px; color: #667eea;">298</div>
+                        </div>
+                        <div style="color: #6c757d;">10.5%</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-fill" style="width: 10.5%"></div>
+                    </div>
+                    
+                    <div class="funnel-stage pulse-animation">
+                        <div>
+                            <div style="font-weight: 600;">Won</div>
+                            <div style="font-size: 24px; color: #667eea;">72</div>
+                        </div>
+                        <div style="color: #6c757d;">2.5%</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-fill" style="width: 2.5%"></div>
+                    </div>
+                </div>
+                
+                <!-- Conversion Rates -->
+                <div>
+                    <div class="conversion-rates">
+                        <h3>Conversion Rates</h3>
+                        
+                        <div class="conversion-item">
+                            <span>Visitor → Lead</span>
+                            <span class="rate-badge rate-down">2.3% ↓</span>
+                        </div>
+                        
+                        <div class="conversion-item">
+                            <span>Lead → MQL</span>
+                            <span class="rate-badge rate-neutral">34.2% →</span>
+                        </div>
+                        
+                        <div class="conversion-item">
+                            <span>MQL → SQL</span>
+                            <span class="rate-badge rate-up">67.8% ↑</span>
+                        </div>
+                        
+                        <div class="conversion-item">
+                            <span>SQL → Opportunity</span>
+                            <span class="rate-badge rate-up">45.3% ↑</span>
+                        </div>
+                        
+                        <div class="conversion-item">
+                            <span>Opportunity → Close</span>
+                            <span class="rate-badge rate-down">24.1% ↓</span>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container" style="margin-top: 20px;">
+                        <h3>Lead Sources (Last 30 Days)</h3>
+                        <div class="lead-source-item">
+                            <span>Organic</span>
+                            <div class="source-bar">
+                                <div class="source-fill" style="width: 100%"></div>
+                            </div>
+                            <span style="font-weight: 600;">847</span>
+                        </div>
+                        <div class="lead-source-item">
+                            <span>Paid Ads</span>
+                            <div class="source-bar">
+                                <div class="source-fill" style="width: 73%"></div>
+                            </div>
+                            <span style="font-weight: 600;">623</span>
+                        </div>
+                        <div class="lead-source-item">
+                            <span>Email</span>
+                            <div class="source-bar">
+                                <div class="source-fill" style="width: 60%"></div>
+                            </div>
+                            <span style="font-weight: 600;">512</span>
+                        </div>
+                        <div class="lead-source-item">
+                            <span>Direct</span>
+                            <div class="source-bar">
+                                <div class="source-fill" style="width: 47%"></div>
+                            </div>
+                            <span style="font-weight: 600;">398</span>
+                        </div>
+                        <div class="lead-source-item">
+                            <span>Referral</span>
+                            <div class="source-bar">
+                                <div class="source-fill" style="width: 34%"></div>
+                            </div>
+                            <span style="font-weight: 600;">287</span>
+                        </div>
+                        <div class="lead-source-item">
+                            <span>Events</span>
+                            <div class="source-bar">
+                                <div class="source-fill" style="width: 21%"></div>
+                            </div>
+                            <span style="font-weight: 600;">180</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Grid -->
+            <div class="bottom-grid">
+                <!-- Revenue by Segment -->
+                <div class="chart-container">
+                    <h3>Revenue by Segment</h3>
+                    <div class="revenue-segment">
+                        <span style="width: 100px;">Enterprise</span>
+                        <div class="segment-bar">
+                            <div class="segment-fill" style="width: 59%">$287K</div>
+                        </div>
+                    </div>
+                    <div class="revenue-segment">
+                        <span style="width: 100px;">Mid-Market</span>
+                        <div class="segment-bar">
+                            <div class="segment-fill" style="width: 29%">$142K</div>
+                        </div>
+                    </div>
+                    <div class="revenue-segment">
+                        <span style="width: 100px;">SMB</span>
+                        <div class="segment-bar">
+                            <div class="segment-fill" style="width: 12%">$58K</div>
+                        </div>
+                    </div>
+                    <canvas id="segment-trend-chart" style="margin-top: 20px; height: 200px;"></canvas>
+                </div>
+                
+                <!-- Pipeline Velocity -->
+                <div class="chart-container">
+                    <h3>Pipeline Velocity Trend</h3>
+                    <canvas id="velocity-chart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+            
+            <!-- Marketing Performance Metrics -->
+            <div class="metrics-highlight">
+                <div class="metric-highlight">
+                    <div class="metric-highlight-value">$1,847</div>
+                    <div class="metric-highlight-label">Customer Acquisition Cost</div>
+                </div>
+                <div class="metric-highlight">
+                    <div class="metric-highlight-value">$24,300</div>
+                    <div class="metric-highlight-label">Lifetime Value</div>
+                </div>
+                <div class="metric-highlight">
+                    <div class="metric-highlight-value">13.2:1</div>
+                    <div class="metric-highlight-label">LTV:CAC Ratio ✓</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Animate funnel bars on load
+        setTimeout(() => {
+            document.querySelectorAll('.funnel-fill').forEach(bar => {
+                bar.style.width = bar.style.width;
+            });
+            document.querySelectorAll('.segment-fill').forEach(bar => {
+                bar.style.width = bar.style.width;
+            });
+            document.querySelectorAll('.source-fill').forEach(bar => {
+                bar.style.width = bar.style.width;
+            });
+        }, 100);
+        
+        // Revenue Trend Chart
+        const segmentCtx = document.getElementById('segment-trend-chart').getContext('2d');
+        new Chart(segmentCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Enterprise',
+                    data: [245, 260, 275, 287],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }, {
+                    label: 'Mid-Market',
+                    data: [120, 128, 135, 142],
+                    borderColor: '#764ba2',
+                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }, {
+                    label: 'SMB',
+                    data: [45, 48, 52, 58],
+                    borderColor: '#f093fb',
+                    backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value + 'K';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Pipeline Velocity Chart
+        const velocityCtx = document.getElementById('velocity-chart').getContext('2d');
+        new Chart(velocityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Days to Close',
+                    data: [65, 62, 58, 54, 50, 47],
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: '#667eea',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Days'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Interactive hover effects
+        document.querySelectorAll('.funnel-stage').forEach(stage => {
+            stage.addEventListener('click', function() {
+                // Simulate drill-down
+                alert('Drill down into stage details...');
+            });
+        });
+    </script>
+</body>
+</html>
