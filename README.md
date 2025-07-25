@@ -32,7 +32,7 @@ Transform your executive decision-making with the most advanced AI-powered busin
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ceo-dashboard.git
+git clone https://github.com/localecho/ceo-dashboard.git
 cd ceo-dashboard
 
 # Install backend dependencies
@@ -111,6 +111,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <p align="center">
   Built with ❤️ by the Executive Intelligence Team
   <br>
-  <a href="https://github.com/yourusername/ceo-dashboard">⭐ Star us on GitHub</a>
+  <a href="https://github.com/localecho/ceo-dashboard">⭐ Star us on GitHub</a>
 </p>
 EOF < /dev/null
