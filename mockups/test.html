@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEO Dashboard - Deployment Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #003A70 0%, #00A650 100%);
+            color: white;
+        }
+        .test-container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            margin: 0 0 1rem 0;
+            font-size: 2.5rem;
+        }
+        .status {
+            font-size: 1.25rem;
+            margin: 1rem 0;
+        }
+        .success {
+            color: #4ADE80;
+        }
+        .links {
+            margin-top: 2rem;
+        }
+        a {
+            color: #FFD100;
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 600;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            max-width: 800px;
+        }
+        .dashboard-link {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .dashboard-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🚀 CEO Dashboard</h1>
+        <p class="status success">✅ Deployment Successful!</p>
+        <p>Welcome to the AI-Powered Executive Intelligence Platform</p>
+        
+        <div class="links">
+            <a href="../index.html">← Back to Main</a>
+            <a href="https://github.com/localecho/ceo-dashboard" target="_blank">GitHub Repository</a>
+        </div>
+        
+        <div class="dashboard-grid">
+            <a href="1_executive_summary.html" class="dashboard-link">
+                <div>📊 Executive Summary</div>
+            </a>
+            <a href="9_ai_command_center.html" class="dashboard-link">
+                <div>🧠 AI Command Center</div>
+            </a>
+            <a href="10_3d_immersive.html" class="dashboard-link">
+                <div>🌐 3D Visualization</div>
+            </a>
+            <a href="11_war_room.html" class="dashboard-link">
+                <div>👥 War Room</div>
+            </a>
+            <a href="12_monte_carlo_simulator.html" class="dashboard-link">
+                <div>🎲 Monte Carlo</div>
+            </a>
+        </div>
+        
+        <div style="margin-top: 2rem; font-size: 0.875rem; opacity: 0.8;">
+            <p>Deployment Time: <span id="time"></span></p>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        
+        // Test if JavaScript is working
+        console.log('CEO Dashboard deployment test successful!');
+        
+        // Test local storage
+        localStorage.setItem('ceo-dashboard-test', 'success');
+        console.log('Local storage test:', localStorage.getItem('ceo-dashboard-test'));
+    </script>
+</body>
+</html>
