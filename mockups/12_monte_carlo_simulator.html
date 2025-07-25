@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Scenario Simulator - Quantum Business Modeling</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <link rel="stylesheet" href="assets/dashboard-enhanced.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-statistics@7.8.2/dist/simple-statistics.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #ffffff;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        .quantum-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Header */
+        .quantum-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quantum-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 166, 80, 0.1) 0%, transparent 70%);
+            animation: quantum-pulse 8s ease-in-out infinite;
+        }
+        
+        @keyframes quantum-pulse {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .quantum-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem 0;
+            background: linear-gradient(90deg, #00A650, #FFD100);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .quantum-subtitle {
+            font-size: 1.125rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Control Panel */
+        .control-panel {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .parameter-control {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .parameter-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .parameter-name {
+            font-weight: 600;
+            color: #00A650;
+        }
+        
+        .parameter-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #FFD100;
+        }
+        
+        .parameter-range {
+            width: 100%;
+            margin: 1rem 0;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #00A650;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(0, 166, 80, 0.5);
+        }
+        
+        .distribution-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.5rem;
+        }
+        
+        /* Simulation Controls */
+        .simulation-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .sim-button {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #00A650, #003A70);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sim-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .sim-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .sim-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 166, 80, 0.4);
+        }
+        
+        .sim-button.running {
+            background: linear-gradient(135deg, #E30613, #FF6900);
+            animation: sim-pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes sim-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .visualization-panel {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stats-panel {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #00A650;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .panel-icon {
+            font-size: 1.5rem;
+        }
+        
+        /* Statistics Display */
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FFD100;
+        }
+        
+        .confidence-interval {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.25rem;
+        }
+        
+        /* Probability Distribution */
+        .distribution-chart {
+            height: 400px;
+            position: relative;
+        }
+        
+        /* Scenario Outcomes */
+        .scenarios-panel {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .scenario-outcome {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .scenario-outcome:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+        
+        .scenario-label {
+            font-weight: 600;
+        }
+        
+        .scenario-label.best {
+            color: #00A650;
+        }
+        
+        .scenario-label.worst {
+            color: #E30613;
+        }
+        
+        .scenario-label.likely {
+            color: #FFD100;
+        }
+        
+        .probability-bar {
+            background: rgba(255, 255, 255, 0.1);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .probability-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #003A70, #00A650);
+            transition: width 0.5s ease;
+        }
+        
+        .scenario-value {
+            text-align: right;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+        
+        /* Real-time Updates */
+        .iteration-counter {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+        
+        .iteration-counter.active {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .iteration-label {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .iteration-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00A650;
+        }
+        
+        /* Advanced Settings */
+        .advanced-settings {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .settings-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: #00A650;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .settings-content {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .settings-content.show {
+            display: grid;
+        }
+        
+        /* Insights Panel */
+        .insights-panel {
+            background: linear-gradient(135deg, rgba(0, 166, 80, 0.1), rgba(0, 58, 112, 0.1));
+            border: 2px solid #00A650;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .insight-item {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .insight-icon {
+            font-size: 1.5rem;
+            margin-top: 0.25rem;
+        }
+        
+        .insight-text {
+            flex: 1;
+            line-height: 1.6;
+        }
+        
+        .insight-highlight {
+            color: #FFD100;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="quantum-container">
+        <!-- Header -->
+        <div class="quantum-header">
+            <div class="header-content">
+                <h1 class="quantum-title">Monte Carlo Scenario Simulator</h1>
+                <p class="quantum-subtitle">Quantum business modeling with 10,000+ parallel universes</p>
+            </div>
+        </div>
+        
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h2 style="color: #00A650; margin-bottom: 2rem;">Scenario Parameters</h2>
+            
+            <div class="parameters-grid">
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span class="parameter-name">Revenue Growth Rate</span>
+                        <span class="parameter-value" id="growthValue">12%</span>
+                    </div>
+                    <input type="range" class="parameter-range" id="growthRate" 
+                           min="-20" max="50" value="12" step="1">
+                    <div class="distribution-info">
+                        <span>μ = 12%</span>
+                        <span>σ = 5%</span>
+                    </div>
+                </div>
+                
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span class="parameter-name">Churn Rate Change</span>
+                        <span class="parameter-value" id="churnValue">+3%</span>
+                    </div>
+                    <input type="range" class="parameter-range" id="churnRate" 
+                           min="-10" max="20" value="3" step="0.5">
+                    <div class="distribution-info">
+                        <span>μ = 3%</span>
+                        <span>σ = 2%</span>
+                    </div>
+                </div>
+                
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span class="parameter-name">Price Adjustment</span>
+                        <span class="parameter-value" id="priceValue">0%</span>
+                    </div>
+                    <input type="range" class="parameter-range" id="priceChange" 
+                           min="-15" max="25" value="0" step="1">
+                    <div class="distribution-info">
+                        <span>μ = 0%</span>
+                        <span>σ = 3%</span>
+                    </div>
+                </div>
+                
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span class="parameter-name">Market Volatility</span>
+                        <span class="parameter-value" id="volatilityValue">Medium</span>
+                    </div>
+                    <input type="range" class="parameter-range" id="volatility" 
+                           min="1" max="5" value="3" step="1">
+                    <div class="distribution-info">
+                        <span>Low</span>
+                        <span>High</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="simulation-controls">
+                <button class="sim-button" id="runSimulation" onclick="runMonteCarlo()">
+                    🎲 Run 10,000 Simulations
+                </button>
+                <button class="sim-button" onclick="resetParameters()">
+                    🔄 Reset Parameters
+                </button>
+                <button class="sim-button" onclick="exportResults()">
+                    📊 Export Results
+                </button>
+            </div>
+            
+            <!-- Advanced Settings -->
+            <div class="advanced-settings">
+                <div class="settings-toggle" onclick="toggleAdvanced()">
+                    <span id="advancedArrow">▶</span>
+                    <span>Advanced Settings</span>
+                </div>
+                <div class="settings-content" id="advancedContent">
+                    <div class="parameter-control">
+                        <div class="parameter-label">
+                            <span class="parameter-name">Simulations</span>
+                            <span class="parameter-value" id="simCountValue">10,000</span>
+                        </div>
+                        <input type="range" id="simCount" min="1000" max="100000" value="10000" step="1000">
+                    </div>
+                    <div class="parameter-control">
+                        <div class="parameter-label">
+                            <span class="parameter-name">Time Horizon</span>
+                            <span class="parameter-value" id="horizonValue">3 months</span>
+                        </div>
+                        <input type="range" id="timeHorizon" min="1" max="12" value="3" step="1">
+                    </div>
+                    <div class="parameter-control">
+                        <div class="parameter-label">
+                            <span class="parameter-name">Confidence Level</span>
+                            <span class="parameter-value" id="confidenceValue">95%</span>
+                        </div>
+                        <input type="range" id="confidence" min="80" max="99" value="95" step="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Grid -->
+        <div class="results-grid">
+            <div class="visualization-panel">
+                <h3 class="panel-title">
+                    <span class="panel-icon">📊</span>
+                    Revenue Distribution (3-Month Projection)
+                </h3>
+                <div class="distribution-chart">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="stats-panel">
+                <h3 class="panel-title">
+                    <span class="panel-icon">📈</span>
+                    Statistical Analysis
+                </h3>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Expected Value</div>
+                    <div class="stat-value" id="expectedValue">$7.0M</div>
+                    <div class="confidence-interval">Base scenario result</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Standard Deviation</div>
+                    <div class="stat-value" id="stdDev">$0.5M</div>
+                    <div class="confidence-interval">Volatility measure</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">95% Confidence Interval</div>
+                    <div class="stat-value" id="confInterval">$6.0M - $8.2M</div>
+                    <div class="confidence-interval">95% probability range</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Value at Risk (VaR)</div>
+                    <div class="stat-value" id="varValue">$5.8M</div>
+                    <div class="confidence-interval">5% worst-case scenario</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scenario Outcomes -->
+        <div class="scenarios-panel">
+            <h3 class="panel-title">
+                <span class="panel-icon">🎯</span>
+                Scenario Outcomes
+            </h3>
+            
+            <div class="scenario-outcome">
+                <span class="scenario-label best">Best Case (95th %ile)</span>
+                <div class="probability-bar">
+                    <div class="probability-fill" style="width: 5%;"></div>
+                </div>
+                <span class="scenario-value" id="bestCase">$8.2M</span>
+            </div>
+            
+            <div class="scenario-outcome">
+                <span class="scenario-label likely">Most Likely (Mode)</span>
+                <div class="probability-bar">
+                    <div class="probability-fill" style="width: 68%;"></div>
+                </div>
+                <span class="scenario-value" id="mostLikely">$7.0M</span>
+            </div>
+            
+            <div class="scenario-outcome">
+                <span class="scenario-label worst">Worst Case (5th %ile)</span>
+                <div class="probability-bar">
+                    <div class="probability-fill" style="width: 5%;"></div>
+                </div>
+                <span class="scenario-value" id="worstCase">$5.8M</span>
+            </div>
+        </div>
+        
+        <!-- AI Insights -->
+        <div class="insights-panel">
+            <h3 class="panel-title">
+                <span class="panel-icon">🧠</span>
+                Monte Carlo Insights
+            </h3>
+            
+            <div class="insight-item">
+                <span class="insight-icon">💡</span>
+                <div class="insight-text">
+                    Based on 10,000 simulations, there's a <span class="insight-highlight">68% probability</span> 
+                    that revenue will fall between $6.5M and $7.5M, centered around your base case of $7.0M.
+                </div>
+            </div>
+            
+            <div class="insight-item">
+                <span class="insight-icon">⚠️</span>
+                <div class="insight-text">
+                    The <span class="insight-highlight">3% churn increase</span> creates significant downside risk. 
+                    In 15% of simulations, revenue falls below $6.2M due to compounding churn effects.
+                </div>
+            </div>
+            
+            <div class="insight-item">
+                <span class="insight-icon">🚀</span>
+                <div class="insight-text">
+                    Growth momentum is strong: <span class="insight-highlight">82% of scenarios</span> show 
+                    positive revenue growth despite the churn headwind, with 25% exceeding $7.5M.
+                </div>
+            </div>
+            
+            <div class="insight-item">
+                <span class="insight-icon">💰</span>
+                <div class="insight-text">
+                    Implementing a <span class="insight-highlight">5% price increase</span> would shift the entire 
+                    distribution upward by $350K, reducing downside risk to under 8% probability.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Iteration Counter -->
+        <div class="iteration-counter" id="iterationCounter">
+            <div class="iteration-label">Simulations Run</div>
+            <div class="iteration-value" id="iterationCount">0</div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize Chart.js
+        let distributionChart;
+        const ctx = document.getElementById('distributionChart').getContext('2d');
+        
+        // Parameter controls
+        const controls = {
+            growth: document.getElementById('growthRate'),
+            churn: document.getElementById('churnRate'),
+            price: document.getElementById('priceChange'),
+            volatility: document.getElementById('volatility'),
+            simCount: document.getElementById('simCount'),
+            horizon: document.getElementById('timeHorizon'),
+            confidence: document.getElementById('confidence')
+        };
+        
+        // Update parameter displays
+        controls.growth.addEventListener('input', (e) => {
+            document.getElementById('growthValue').textContent = e.target.value + '%';
+        });
+        
+        controls.churn.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            document.getElementById('churnValue').textContent = 
+                (value >= 0 ? '+' : '') + value + '%';
+        });
+        
+        controls.price.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            document.getElementById('priceValue').textContent = 
+                (value >= 0 ? '+' : '') + value + '%';
+        });
+        
+        controls.volatility.addEventListener('input', (e) => {
+            const labels = ['Very Low', 'Low', 'Medium', 'High', 'Very High'];
+            document.getElementById('volatilityValue').textContent = labels[e.target.value - 1];
+        });
+        
+        controls.simCount.addEventListener('input', (e) => {
+            document.getElementById('simCountValue').textContent = 
+                parseInt(e.target.value).toLocaleString();
+        });
+        
+        controls.horizon.addEventListener('input', (e) => {
+            document.getElementById('horizonValue').textContent = 
+                e.target.value + ' month' + (e.target.value > 1 ? 's' : '');
+        });
+        
+        controls.confidence.addEventListener('input', (e) => {
+            document.getElementById('confidenceValue').textContent = e.target.value + '%';
+        });
+        
+        // Toggle advanced settings
+        function toggleAdvanced() {
+            const content = document.getElementById('advancedContent');
+            const arrow = document.getElementById('advancedArrow');
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                arrow.textContent = '▶';
+            } else {
+                content.classList.add('show');
+                arrow.textContent = '▼';
+            }
+        }
+        
+        // Monte Carlo simulation
+        async function runMonteCarlo() {
+            const button = document.getElementById('runSimulation');
+            const counter = document.getElementById('iterationCounter');
+            
+            // Get parameters
+            const params = {
+                growth: parseFloat(controls.growth.value) / 100,
+                churn: parseFloat(controls.churn.value) / 100,
+                price: parseFloat(controls.price.value) / 100,
+                volatility: parseFloat(controls.volatility.value),
+                simCount: parseInt(controls.simCount.value),
+                horizon: parseInt(controls.horizon.value),
+                confidence: parseFloat(controls.confidence.value) / 100
+            };
+            
+            // UI feedback
+            button.classList.add('running');
+            button.textContent = '⚡ Running Simulations...';
+            counter.classList.add('active');
+            
+            // Base revenue (millions)
+            const baseRevenue = 6.5; // Starting point
+            
+            // Run simulations
+            const results = [];
+            const batchSize = 100;
+            
+            for (let i = 0; i < params.simCount; i += batchSize) {
+                // Process in batches for UI updates
+                await new Promise(resolve => setTimeout(resolve, 10));
+                
+                for (let j = 0; j < batchSize && (i + j) < params.simCount; j++) {
+                    const result = simulateScenario(baseRevenue, params);
+                    results.push(result);
+                }
+                
+                // Update counter
+                document.getElementById('iterationCount').textContent = 
+                    Math.min(i + batchSize, params.simCount).toLocaleString();
+            }
+            
+            // Calculate statistics
+            const stats = calculateStatistics(results, params.confidence);
+            
+            // Update UI
+            updateResults(stats);
+            updateChart(results, stats);
+            
+            // Reset button
+            button.classList.remove('running');
+            button.textContent = '🎲 Run 10,000 Simulations';
+            
+            // Hide counter after delay
+            setTimeout(() => {
+                counter.classList.remove('active');
+            }, 2000);
+        }
+        
+        function simulateScenario(baseRevenue, params) {
+            // Volatility scaling
+            const volScale = params.volatility / 3;
+            
+            // Growth component with uncertainty
+            const growthStd = 0.05 * volScale;
+            const actualGrowth = normalRandom(params.growth, growthStd);
+            
+            // Churn component with uncertainty
+            const churnStd = 0.02 * volScale;
+            const actualChurn = normalRandom(params.churn, churnStd);
+            
+            // Price component with elasticity
+            const priceStd = 0.03 * volScale;
+            const actualPrice = normalRandom(params.price, priceStd);
+            
+            // Calculate revenue impact
+            const growthMultiplier = 1 + (actualGrowth * params.horizon / 12);
+            const churnMultiplier = 1 - (actualChurn * params.horizon / 12);
+            const priceMultiplier = 1 + (actualPrice * 0.8); // 80% pass-through
+            
+            // Add market randomness
+            const marketNoise = normalRandom(1, 0.02 * volScale);
+            
+            // Final revenue calculation
+            const revenue = baseRevenue * growthMultiplier * churnMultiplier * 
+                          priceMultiplier * marketNoise;
+            
+            return Math.max(revenue, 0); // Ensure non-negative
+        }
+        
+        function normalRandom(mean, std) {
+            // Box-Muller transform for normal distribution
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+            return mean + z0 * std;
+        }
+        
+        function calculateStatistics(results, confidenceLevel) {
+            // Sort results
+            const sorted = results.slice().sort((a, b) => a - b);
+            
+            // Basic statistics
+            const mean = ss.mean(results);
+            const stdDev = ss.standardDeviation(results);
+            const median = ss.median(sorted);
+            
+            // Percentiles
+            const lowerPercentile = (1 - confidenceLevel) / 2;
+            const upperPercentile = 1 - lowerPercentile;
+            
+            const percentile = (p) => {
+                const index = Math.floor(p * (sorted.length - 1));
+                return sorted[index];
+            };
+            
+            return {
+                mean: mean,
+                stdDev: stdDev,
+                median: median,
+                min: sorted[0],
+                max: sorted[sorted.length - 1],
+                p5: percentile(0.05),
+                p95: percentile(0.95),
+                lowerCI: percentile(lowerPercentile),
+                upperCI: percentile(upperPercentile),
+                var: percentile(0.05) // Value at Risk
+            };
+        }
+        
+        function updateResults(stats) {
+            // Update statistics
+            document.getElementById('expectedValue').textContent = 
+                `$${stats.mean.toFixed(1)}M`;
+            document.getElementById('stdDev').textContent = 
+                `$${stats.stdDev.toFixed(2)}M`;
+            document.getElementById('confInterval').textContent = 
+                `$${stats.lowerCI.toFixed(1)}M - $${stats.upperCI.toFixed(1)}M`;
+            document.getElementById('varValue').textContent = 
+                `$${stats.var.toFixed(1)}M`;
+            
+            // Update scenario outcomes
+            document.getElementById('bestCase').textContent = 
+                `$${stats.p95.toFixed(1)}M`;
+            document.getElementById('mostLikely').textContent = 
+                `$${stats.median.toFixed(1)}M`;
+            document.getElementById('worstCase').textContent = 
+                `$${stats.p5.toFixed(1)}M`;
+        }
+        
+        function updateChart(results, stats) {
+            // Create histogram bins
+            const binCount = 50;
+            const binWidth = (stats.max - stats.min) / binCount;
+            const bins = Array(binCount).fill(0);
+            const binLabels = [];
+            
+            // Fill bins
+            results.forEach(value => {
+                const binIndex = Math.min(
+                    Math.floor((value - stats.min) / binWidth),
+                    binCount - 1
+                );
+                bins[binIndex]++;
+            });
+            
+            // Create labels
+            for (let i = 0; i < binCount; i++) {
+                const binStart = stats.min + i * binWidth;
+                if (i % 5 === 0) {
+                    binLabels.push(`$${binStart.toFixed(1)}M`);
+                } else {
+                    binLabels.push('');
+                }
+            }
+            
+            // Update or create chart
+            if (distributionChart) {
+                distributionChart.destroy();
+            }
+            
+            distributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binLabels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: bins,
+                        backgroundColor: 'rgba(0, 166, 80, 0.5)',
+                        borderColor: 'rgba(0, 166, 80, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const percentage = (context.parsed.y / results.length * 100).toFixed(1);
+                                    return `${context.parsed.y} scenarios (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of Scenarios',
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function resetParameters() {
+            controls.growth.value = 12;
+            controls.churn.value = 3;
+            controls.price.value = 0;
+            controls.volatility.value = 3;
+            
+            // Update displays
+            document.getElementById('growthValue').textContent = '12%';
+            document.getElementById('churnValue').textContent = '+3%';
+            document.getElementById('priceValue').textContent = '0%';
+            document.getElementById('volatilityValue').textContent = 'Medium';
+        }
+        
+        function exportResults() {
+            // In real implementation, would export to CSV/Excel
+            alert('Results export would download a detailed CSV file with all simulation data');
+        }
+        
+        // Initialize with default simulation
+        setTimeout(() => {
+            runMonteCarlo();
+        }, 1000);
+    </script>
+</body>
+</html>

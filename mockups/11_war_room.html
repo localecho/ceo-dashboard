@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative War Room - Strategic Decision Center</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <link rel="stylesheet" href="assets/dashboard-enhanced.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.6.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .war-room-container {
+            display: grid;
+            grid-template-columns: 60px 1fr 300px;
+            height: 100vh;
+        }
+        
+        /* Sidebar */
+        .tool-sidebar {
+            background: #0a0a0a;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0;
+            gap: 1rem;
+        }
+        
+        .tool-button {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+        
+        .tool-button:hover {
+            background: rgba(0, 166, 80, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .tool-button.active {
+            background: #00A650;
+            border-color: #00A650;
+        }
+        
+        /* Main Canvas Area */
+        .canvas-area {
+            position: relative;
+            background: #2a2a2a;
+            overflow: hidden;
+        }
+        
+        #whiteboard {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+        }
+        
+        .canvas-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .room-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00A650;
+        }
+        
+        .scenario-bar {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+        
+        .scenario-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .scenario-label {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .scenario-value {
+            font-weight: 600;
+            color: #00A650;
+        }
+        
+        /* Collaboration Panel */
+        .collab-panel {
+            background: #0a0a0a;
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid #333;
+        }
+        
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #00A650;
+            margin-bottom: 1rem;
+        }
+        
+        /* Active Users */
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .user-cursor {
+            position: absolute;
+            pointer-events: none;
+            z-index: 100;
+            transition: all 0.1s ease;
+        }
+        
+        .cursor-pointer {
+            width: 20px;
+            height: 20px;
+            transform: rotate(-45deg);
+            margin-left: -2px;
+            margin-top: -2px;
+        }
+        
+        .cursor-label {
+            position: absolute;
+            top: 20px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        
+        /* Decision Voting */
+        .voting-section {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .decision-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .decision-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .decision-votes {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+        
+        .vote-option {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .vote-option.yes {
+            border-color: #00A650;
+            color: #00A650;
+        }
+        
+        .vote-option.no {
+            border-color: #E30613;
+            color: #E30613;
+        }
+        
+        .vote-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .vote-count {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Floating Widgets */
+        .floating-widget {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #00A650;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: move;
+            z-index: 50;
+        }
+        
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .widget-title {
+            font-weight: 600;
+            color: #00A650;
+        }
+        
+        .widget-close {
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.5);
+            transition: color 0.3s ease;
+        }
+        
+        .widget-close:hover {
+            color: #E30613;
+        }
+        
+        /* Chat Window */
+        .chat-widget {
+            bottom: 2rem;
+            right: 320px;
+            width: 300px;
+            max-height: 400px;
+        }
+        
+        .chat-messages {
+            height: 250px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chat-message {
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .chat-user {
+            font-weight: 600;
+            color: #00A650;
+        }
+        
+        .chat-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        /* Metrics Dashboard */
+        .metrics-widget {
+            top: 100px;
+            left: 100px;
+            width: 400px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00A650;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Action Items */
+        .action-list {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .action-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        
+        .action-checkbox.checked {
+            background: #00A650;
+            border-color: #00A650;
+        }
+        
+        /* Notification Toast */
+        .notification {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 166, 80, 0.9);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translate(-50%, 100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="war-room-container">
+        <!-- Tool Sidebar -->
+        <div class="tool-sidebar">
+            <div class="tool-button active" onclick="selectTool('pen')" title="Draw">✏️</div>
+            <div class="tool-button" onclick="selectTool('text')" title="Text">📝</div>
+            <div class="tool-button" onclick="selectTool('shape')" title="Shapes">⬜</div>
+            <div class="tool-button" onclick="selectTool('sticky')" title="Sticky Note">📌</div>
+            <div class="tool-button" onclick="selectTool('chart')" title="Add Chart">📊</div>
+            <div class="tool-button" onclick="selectTool('erase')" title="Erase">🧹</div>
+            <div style="flex: 1;"></div>
+            <div class="tool-button" onclick="clearCanvas()" title="Clear All">🗑️</div>
+            <div class="tool-button" onclick="saveSnapshot()" title="Save">💾</div>
+        </div>
+        
+        <!-- Main Canvas Area -->
+        <div class="canvas-area">
+            <!-- Header -->
+            <div class="canvas-header">
+                <div class="room-title">Strategic Decision War Room</div>
+                <div class="scenario-bar">
+                    <div class="scenario-item">
+                        <span class="scenario-label">Growth:</span>
+                        <span class="scenario-value">+12%</span>
+                    </div>
+                    <div class="scenario-item">
+                        <span class="scenario-label">Churn:</span>
+                        <span class="scenario-value">+3%</span>
+                    </div>
+                    <div class="scenario-item">
+                        <span class="scenario-label">3M Projection:</span>
+                        <span class="scenario-value">$7.0M</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Canvas -->
+            <canvas id="whiteboard"></canvas>
+            
+            <!-- Floating Widgets -->
+            <div class="floating-widget metrics-widget">
+                <div class="widget-header">
+                    <div class="widget-title">Live Metrics</div>
+                    <div class="widget-close" onclick="closeWidget(this)">✕</div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">$57.6M</div>
+                        <div class="metric-label">Revenue</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">1,234</div>
+                        <div class="metric-label">Customers</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">72</div>
+                        <div class="metric-label">NPS Score</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">3.2%</div>
+                        <div class="metric-label">Churn Rate</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="floating-widget chat-widget">
+                <div class="widget-header">
+                    <div class="widget-title">Team Chat</div>
+                    <div class="widget-close" onclick="closeWidget(this)">✕</div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message">
+                        <span class="chat-user">Sarah Chen:</span> Looking at the 12% growth projection
+                    </div>
+                    <div class="chat-message">
+                        <span class="chat-user">Mike Johnson:</span> We need to address the 3% churn increase
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" placeholder="Type a message..." id="chatInput">
+                    <button onclick="sendChat()">Send</button>
+                </div>
+            </div>
+            
+            <!-- User Cursors -->
+            <div class="user-cursor" style="top: 200px; left: 300px;">
+                <svg class="cursor-pointer" width="20" height="20" style="fill: #FF6900;">
+                    <path d="M0,0 L20,10 L10,10 L10,20 Z"/>
+                </svg>
+                <div class="cursor-label">Sarah Chen</div>
+            </div>
+            
+            <div class="user-cursor" style="top: 400px; left: 500px;">
+                <svg class="cursor-pointer" width="20" height="20" style="fill: #003A70;">
+                    <path d="M0,0 L20,10 L10,10 L10,20 Z"/>
+                </svg>
+                <div class="cursor-label">Mike Johnson</div>
+            </div>
+        </div>
+        
+        <!-- Collaboration Panel -->
+        <div class="collab-panel">
+            <!-- Active Users -->
+            <div class="panel-section">
+                <div class="section-title">Active Participants (4)</div>
+                <div class="user-list">
+                    <div class="user-item">
+                        <div class="user-avatar" style="background: #00A650;">YO</div>
+                        <div>
+                            <div style="font-weight: 600;">You</div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Drawing</div>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-avatar" style="background: #FF6900;">SC</div>
+                        <div>
+                            <div style="font-weight: 600;">Sarah Chen</div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Viewing</div>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-avatar" style="background: #003A70;">MJ</div>
+                        <div>
+                            <div style="font-weight: 600;">Mike Johnson</div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Annotating</div>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-avatar" style="background: #FFD100;">RL</div>
+                        <div>
+                            <div style="font-weight: 600;">Rachel Lee</div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Idle</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Decision Voting -->
+            <div class="panel-section voting-section">
+                <div class="section-title">Active Decisions</div>
+                
+                <div class="decision-card">
+                    <div class="decision-title">Launch retention campaign for at-risk accounts?</div>
+                    <div style="font-size: 0.875rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">
+                        Impact: Reduce churn by 1.5%, save $210K
+                    </div>
+                    <div class="decision-votes">
+                        <div class="vote-option yes">
+                            <div class="vote-count">3</div>
+                            <div>Approve</div>
+                        </div>
+                        <div class="vote-option no">
+                            <div class="vote-count">1</div>
+                            <div>Decline</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="decision-card">
+                    <div class="decision-title">Implement 5% price increase for new customers?</div>
+                    <div style="font-size: 0.875rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem;">
+                        Impact: +$175K annual revenue
+                    </div>
+                    <div class="decision-votes">
+                        <div class="vote-option yes">
+                            <div class="vote-count">2</div>
+                            <div>Approve</div>
+                        </div>
+                        <div class="vote-option no">
+                            <div class="vote-count">2</div>
+                            <div>Decline</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Items -->
+            <div class="panel-section">
+                <div class="section-title">Action Items</div>
+                <div class="action-list">
+                    <div class="action-item">
+                        <div class="action-checkbox checked"></div>
+                        <span>Analyze churn drivers in mid-market segment</span>
+                    </div>
+                    <div class="action-item">
+                        <div class="action-checkbox"></div>
+                        <span>Prepare retention campaign proposal</span>
+                    </div>
+                    <div class="action-item">
+                        <div class="action-checkbox"></div>
+                        <span>Review pricing elasticity data</span>
+                    </div>
+                    <div class="action-item">
+                        <div class="action-checkbox"></div>
+                        <span>Schedule follow-up meeting for Thursday</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('whiteboard');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let currentTool = 'pen';
+        
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Drawing functions
+        canvas.addEventListener('mousedown', (e) => {
+            if (currentTool === 'pen') {
+                isDrawing = true;
+                ctx.beginPath();
+                ctx.moveTo(e.offsetX, e.offsetY);
+                ctx.strokeStyle = '#00A650';
+                ctx.lineWidth = 2;
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing && currentTool === 'pen') {
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
+            }
+            
+            // Broadcast cursor position
+            broadcastCursor(e.offsetX, e.offsetY);
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+        
+        // Tool selection
+        function selectTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        // Clear canvas
+        function clearCanvas() {
+            if (confirm('Clear all drawings?')) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                showNotification('Canvas cleared');
+            }
+        }
+        
+        // Save snapshot
+        function saveSnapshot() {
+            const dataUrl = canvas.toDataURL();
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `war-room-${Date.now()}.png`;
+            a.click();
+            showNotification('Snapshot saved');
+        }
+        
+        // Widget management
+        function closeWidget(closeBtn) {
+            closeBtn.parentElement.parentElement.style.display = 'none';
+        }
+        
+        // Make widgets draggable
+        document.querySelectorAll('.floating-widget').forEach(widget => {
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+            
+            const header = widget.querySelector('.widget-header');
+            
+            header.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+            
+            function dragStart(e) {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+                
+                if (e.target.parentElement === header) {
+                    isDragging = true;
+                }
+            }
+            
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                    
+                    xOffset = currentX;
+                    yOffset = currentY;
+                    
+                    widget.style.transform = `translate(${currentX}px, ${currentY}px)`;
+                }
+            }
+            
+            function dragEnd() {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+        });
+        
+        // Chat functionality
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                const chatMessages = document.getElementById('chatMessages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chat-message';
+                messageDiv.innerHTML = `<span class="chat-user">You:</span> ${message}`;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                input.value = '';
+                
+                // Simulate response
+                setTimeout(() => {
+                    const response = document.createElement('div');
+                    response.className = 'chat-message';
+                    response.innerHTML = `<span class="chat-user">AI Assistant:</span> Noted. I'll add that to our action items.`;
+                    chatMessages.appendChild(response);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 1000);
+            }
+        }
+        
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChat();
+            }
+        });
+        
+        // Broadcast cursor position (simulated)
+        function broadcastCursor(x, y) {
+            // In real implementation, would use WebSocket
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Simulate real-time collaboration
+        setInterval(() => {
+            // Move user cursors
+            document.querySelectorAll('.user-cursor').forEach(cursor => {
+                const currentTop = parseInt(cursor.style.top);
+                const currentLeft = parseInt(cursor.style.left);
+                
+                cursor.style.top = currentTop + (Math.random() - 0.5) * 20 + 'px';
+                cursor.style.left = currentLeft + (Math.random() - 0.5) * 20 + 'px';
+            });
+        }, 2000);
+        
+        // Action item checkboxes
+        document.querySelectorAll('.action-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('click', function() {
+                this.classList.toggle('checked');
+            });
+        });
+        
+        // Initial notification
+        showNotification('War Room session started - 4 participants connected');
+    </script>
+</body>
+</html>

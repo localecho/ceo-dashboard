@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Immersive Dashboard - Spatial Data Visualization</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <link rel="stylesheet" href="assets/dashboard-enhanced.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .ui-overlay > * {
+            pointer-events: auto;
+        }
+        
+        .header-3d {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-3d {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00A650;
+            text-shadow: 0 0 20px rgba(0, 166, 80, 0.5);
+        }
+        
+        .view-controls {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .view-button {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .view-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 166, 80, 0.3);
+        }
+        
+        .view-button.active {
+            background: rgba(0, 166, 80, 0.3);
+            border-color: #00A650;
+        }
+        
+        .metric-hud {
+            position: absolute;
+            bottom: 2rem;
+            left: 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1.5rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 300px;
+        }
+        
+        .hud-title {
+            font-size: 1.25rem;
+            color: #00A650;
+            margin-bottom: 1rem;
+        }
+        
+        .hud-metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .hud-metric-label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .hud-metric-value {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        .navigation-help {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .navigation-help h4 {
+            color: #00A650;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .control-item {
+            margin-bottom: 0.25rem;
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-text {
+            font-size: 1.5rem;
+            color: #00A650;
+            margin-bottom: 2rem;
+        }
+        
+        .loading-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            background: #00A650;
+            width: 0%;
+            animation: load 2s ease-out forwards;
+        }
+        
+        @keyframes load {
+            to { width: 100%; }
+        }
+        
+        .metric-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid #00A650;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+        
+        .metric-tooltip.visible {
+            opacity: 1;
+        }
+        
+        .scenario-3d-panel {
+            position: absolute;
+            top: 50%;
+            right: 2rem;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1.5rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 250px;
+        }
+        
+        .scenario-3d-title {
+            color: #00A650;
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+        
+        .scenario-impact-3d {
+            background: rgba(0, 166, 80, 0.1);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .impact-value-3d {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00A650;
+        }
+        
+        .depth-indicator {
+            position: absolute;
+            left: 50%;
+            bottom: 100px;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .depth-level {
+            width: 40px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .depth-level.active {
+            background: #00A650;
+            box-shadow: 0 0 10px rgba(0, 166, 80, 0.5);
+        }
+        
+        .vr-toggle {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #003A70, #00A650);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .vr-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 166, 80, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-text">Initializing 3D Environment...</div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+    
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container"></div>
+    
+    <!-- UI Overlay -->
+    <div class="ui-overlay">
+        <!-- Header -->
+        <div class="header-3d">
+            <div class="logo-3d">BCG 3D Analytics</div>
+            <div class="view-controls">
+                <button class="view-button active" onclick="setView('overview')">Overview</button>
+                <button class="view-button" onclick="setView('revenue')">Revenue Landscape</button>
+                <button class="view-button" onclick="setView('customers')">Customer Universe</button>
+                <button class="view-button" onclick="setView('performance')">Performance Matrix</button>
+            </div>
+        </div>
+        
+        <!-- VR Toggle -->
+        <button class="vr-toggle" onclick="toggleVR()">
+            🥽 Enter VR Mode
+        </button>
+        
+        <!-- Metric HUD -->
+        <div class="metric-hud">
+            <div class="hud-title">Real-time Metrics</div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Revenue</span>
+                <span class="hud-metric-value" id="hudRevenue">$57.6M</span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Growth Rate</span>
+                <span class="hud-metric-value" id="hudGrowth">+12%</span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Active Users</span>
+                <span class="hud-metric-value" id="hudUsers">8,234</span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">System Health</span>
+                <span class="hud-metric-value" id="hudHealth">99.9%</span>
+            </div>
+        </div>
+        
+        <!-- Scenario Panel -->
+        <div class="scenario-3d-panel">
+            <div class="scenario-3d-title">Scenario Parameters</div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Growth</span>
+                <span class="hud-metric-value">+12%</span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Churn</span>
+                <span class="hud-metric-value">+3%</span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Price</span>
+                <span class="hud-metric-value">0%</span>
+            </div>
+            <div class="scenario-impact-3d">
+                <div style="font-size: 0.875rem; margin-bottom: 0.5rem;">3-Month Projection</div>
+                <div class="impact-value-3d">$7.0M</div>
+                <div style="font-size: 0.75rem; margin-top: 0.5rem;">+8.6% vs baseline</div>
+            </div>
+        </div>
+        
+        <!-- Navigation Help -->
+        <div class="navigation-help">
+            <h4>Navigation Controls</h4>
+            <div class="control-item">🖱️ Left Click + Drag: Rotate</div>
+            <div class="control-item">🖱️ Right Click + Drag: Pan</div>
+            <div class="control-item">⚲ Scroll: Zoom</div>
+            <div class="control-item">🎯 Click Objects: Details</div>
+        </div>
+        
+        <!-- Depth Indicator -->
+        <div class="depth-indicator">
+            <div class="depth-level active" onclick="setDepth(0)"></div>
+            <div class="depth-level" onclick="setDepth(1)"></div>
+            <div class="depth-level" onclick="setDepth(2)"></div>
+            <div class="depth-level" onclick="setDepth(3)"></div>
+        </div>
+    </div>
+    
+    <!-- Metric Tooltip -->
+    <div class="metric-tooltip" id="tooltip">
+        <div id="tooltipContent"></div>
+    </div>
+    
+    <script>
+        // Three.js Scene Setup
+        let scene, camera, renderer, controls;
+        let metricObjects = [];
+        let currentView = 'overview';
+        
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x0a0a0a, 10, 100);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 10, 30);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            scene.add(ambientLight);
+            
+            const pointLight1 = new THREE.PointLight(0x00A650, 1);
+            pointLight1.position.set(20, 20, 20);
+            scene.add(pointLight1);
+            
+            const pointLight2 = new THREE.PointLight(0x003A70, 0.8);
+            pointLight2.position.set(-20, 20, -20);
+            scene.add(pointLight2);
+            
+            // Controls (would need OrbitControls library)
+            // For now, simple mouse interaction
+            setupMouseControls();
+            
+            // Create 3D visualization
+            createMetricLandscape();
+            
+            // Start animation
+            animate();
+            
+            // Hide loading screen
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                }, 500);
+            }, 2000);
+        }
+        
+        function createMetricLandscape() {
+            // Create revenue towers
+            const revenueData = [4.2, 4.5, 4.8, 5.1, 5.3, 5.6, 5.9, 6.1, 6.4];
+            const spacing = 5;
+            
+            revenueData.forEach((value, index) => {
+                const height = value * 3;
+                const geometry = new THREE.BoxGeometry(3, height, 3);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x00A650,
+                    emissive: 0x00A650,
+                    emissiveIntensity: 0.2
+                });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set(index * spacing - 20, height / 2, 0);
+                cube.userData = {
+                    type: 'revenue',
+                    value: value,
+                    month: `Month ${index + 1}`
+                };
+                scene.add(cube);
+                metricObjects.push(cube);
+                
+                // Add glowing edges
+                const edges = new THREE.EdgesGeometry(geometry);
+                const line = new THREE.LineSegments(
+                    edges,
+                    new THREE.LineBasicMaterial({ color: 0x00FF00 })
+                );
+                cube.add(line);
+            });
+            
+            // Create customer particles
+            const particleCount = 1234;
+            const particles = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                positions.push(
+                    (Math.random() - 0.5) * 50,
+                    Math.random() * 30,
+                    (Math.random() - 0.5) * 50
+                );
+                
+                const color = new THREE.Color();
+                const health = Math.random();
+                if (health > 0.7) {
+                    color.setHex(0x00A650); // Healthy
+                } else if (health > 0.3) {
+                    color.setHex(0xFFD100); // At risk
+                } else {
+                    color.setHex(0xE30613); // Churning
+                }
+                colors.push(color.r, color.g, color.b);
+            }
+            
+            particles.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            particles.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                size: 0.5,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const particleSystem = new THREE.Points(particles, particleMaterial);
+            particleSystem.userData = { type: 'customers' };
+            scene.add(particleSystem);
+            
+            // Create performance grid
+            const gridHelper = new THREE.GridHelper(50, 20, 0x003A70, 0x003A70);
+            scene.add(gridHelper);
+            
+            // Add floating metrics
+            createFloatingMetric('NPS: 72', -15, 15, -10, 0xFFD100);
+            createFloatingMetric('Uptime: 99.9%', 15, 15, -10, 0x00A650);
+            createFloatingMetric('Churn: 3.2%', 0, 15, 10, 0xE30613);
+        }
+        
+        function createFloatingMetric(text, x, y, z, color) {
+            // In real implementation, would use TextGeometry
+            // For now, create a glowing sphere as placeholder
+            const geometry = new THREE.SphereGeometry(2, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.5,
+                transparent: true,
+                opacity: 0.8
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(x, y, z);
+            sphere.userData = { type: 'metric', text: text };
+            scene.add(sphere);
+            metricObjects.push(sphere);
+            
+            // Add pulsing animation
+            sphere.userData.pulse = 0;
+        }
+        
+        function setupMouseControls() {
+            let mouseX = 0, mouseY = 0;
+            let targetX = 0, targetY = 0;
+            
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+                mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+            });
+            
+            function updateCamera() {
+                targetX = mouseX * 0.1;
+                targetY = mouseY * 0.1;
+                
+                camera.position.x += (targetX - camera.position.x) * 0.05;
+                camera.position.y += (targetY * 30 - camera.position.y + 10) * 0.05;
+                camera.lookAt(scene.position);
+            }
+            
+            setInterval(updateCamera, 16);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate revenue towers slowly
+            metricObjects.forEach(obj => {
+                if (obj.userData.type === 'revenue') {
+                    obj.rotation.y += 0.002;
+                }
+                if (obj.userData.pulse !== undefined) {
+                    obj.userData.pulse += 0.05;
+                    obj.scale.setScalar(1 + Math.sin(obj.userData.pulse) * 0.1);
+                }
+            });
+            
+            // Update particle system
+            const particles = scene.children.find(child => child.userData.type === 'customers');
+            if (particles) {
+                particles.rotation.y += 0.001;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Animate camera to different positions based on view
+            switch(view) {
+                case 'overview':
+                    animateCamera(0, 10, 30);
+                    break;
+                case 'revenue':
+                    animateCamera(-10, 5, 15);
+                    break;
+                case 'customers':
+                    animateCamera(10, 20, 10);
+                    break;
+                case 'performance':
+                    animateCamera(0, 25, 0);
+                    break;
+            }
+        }
+        
+        function animateCamera(x, y, z) {
+            // Simple camera animation (would use TWEEN.js in production)
+            const steps = 60;
+            let step = 0;
+            const startPos = {
+                x: camera.position.x,
+                y: camera.position.y,
+                z: camera.position.z
+            };
+            
+            function moveCamera() {
+                if (step < steps) {
+                    step++;
+                    const t = step / steps;
+                    camera.position.x = startPos.x + (x - startPos.x) * t;
+                    camera.position.y = startPos.y + (y - startPos.y) * t;
+                    camera.position.z = startPos.z + (z - startPos.z) * t;
+                    camera.lookAt(scene.position);
+                    requestAnimationFrame(moveCamera);
+                }
+            }
+            moveCamera();
+        }
+        
+        function setDepth(level) {
+            document.querySelectorAll('.depth-level').forEach((el, i) => {
+                el.classList.toggle('active', i <= level);
+            });
+            
+            // Adjust fog based on depth
+            scene.fog.near = 10 - level * 2;
+            scene.fog.far = 100 - level * 20;
+        }
+        
+        function toggleVR() {
+            // VR implementation would go here
+            alert('VR mode would require WebXR API implementation and VR headset');
+        }
+        
+        // Update HUD with real-time data
+        setInterval(() => {
+            document.getElementById('hudRevenue').textContent = 
+                `$${(57.6 + Math.random() * 0.2 - 0.1).toFixed(1)}M`;
+            document.getElementById('hudUsers').textContent = 
+                Math.floor(8234 + Math.random() * 100 - 50).toLocaleString();
+        }, 3000);
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Initialize scene
+        init();
+    </script>
+</body>
+</html>

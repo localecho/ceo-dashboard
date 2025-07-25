@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Command Center - Autonomous Business Intelligence</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <link rel="stylesheet" href="assets/dashboard-enhanced.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.6.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a1a;
+        }
+        
+        .ai-interface {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .ai-header {
+            background: linear-gradient(135deg, #003A70 0%, #00A650 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ai-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+        
+        .voice-assistant {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .voice-orb {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .voice-orb:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .voice-orb.listening {
+            animation: listening 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes listening {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5); }
+            50% { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
+        }
+        
+        .voice-icon {
+            font-size: 2.5rem;
+        }
+        
+        .ai-status {
+            flex: 1;
+        }
+        
+        .ai-status h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+        }
+        
+        .ai-status p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .ai-chat {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .message.ai .message-avatar {
+            background: #003A70;
+            color: white;
+        }
+        
+        .message.user .message-avatar {
+            background: #00A650;
+            color: white;
+        }
+        
+        .message-content {
+            flex: 1;
+            max-width: 70%;
+        }
+        
+        .message-bubble {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .message.user .message-bubble {
+            background: #E8F5E9;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        
+        .chat-input {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .chat-input button {
+            padding: 1rem 2rem;
+            background: #003A70;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+        
+        .chat-input button:hover {
+            background: #002550;
+        }
+        
+        .ai-insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .ai-insight-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ai-insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #003A70;
+        }
+        
+        .ai-insight-card.critical::before {
+            background: #E30613;
+        }
+        
+        .ai-insight-card.opportunity::before {
+            background: #00A650;
+        }
+        
+        .insight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .insight-title {
+            font-weight: 700;
+            color: #003A70;
+            font-size: 1.125rem;
+        }
+        
+        .insight-confidence {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #666;
+        }
+        
+        .confidence-bar {
+            width: 60px;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: #00A650;
+            transition: width 0.3s ease;
+        }
+        
+        .scenario-modeling {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .scenario-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .current-scenario {
+            background: #FFF4E6;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        
+        .scenario-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .scenario-metric strong {
+            color: #003A70;
+        }
+        
+        .scenario-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        
+        .scenario-value.positive {
+            color: #00A650;
+        }
+        
+        .scenario-value.negative {
+            color: #E30613;
+        }
+        
+        .scenario-projection {
+            background: #E8F5E9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .projection-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #003A70;
+            margin: 0.5rem 0;
+        }
+        
+        .projection-change {
+            font-size: 1.125rem;
+            color: #00A650;
+        }
+        
+        .action-recommendations {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 2px solid #003A70;
+        }
+        
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-icon {
+            width: 50px;
+            height: 50px;
+            background: #E8F5E9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .action-details {
+            flex: 1;
+        }
+        
+        .action-title {
+            font-weight: 600;
+            color: #003A70;
+            margin-bottom: 0.25rem;
+        }
+        
+        .action-impact {
+            font-size: 0.875rem;
+            color: #666;
+        }
+        
+        .action-button {
+            padding: 0.5rem 1rem;
+            background: #003A70;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .neural-activity {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: rgba(0, 58, 112, 0.9);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .neural-indicator {
+            width: 12px;
+            height: 12px;
+            background: #00A650;
+            border-radius: 50%;
+            animation: neural-pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes neural-pulse {
+            0%, 100% { opacity: 0.5; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <div class="ai-interface">
+        <!-- AI Assistant Header -->
+        <div class="ai-header">
+            <div class="voice-assistant">
+                <div class="voice-orb" id="voiceOrb">
+                    <span class="voice-icon">🎙️</span>
+                </div>
+                <div class="ai-status">
+                    <h1>BCG AI Command Center</h1>
+                    <p>Your autonomous business intelligence partner is ready. Click the microphone or type your questions.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Chat Interface -->
+        <div class="ai-chat">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            Welcome to your AI Command Center. I've analyzed your current business metrics and identified several critical insights. Your scenario modeling shows interesting projections - let me walk you through them.
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Ask me anything about your business metrics..." />
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+        
+        <!-- Current Scenario Analysis -->
+        <div class="scenario-modeling">
+            <div class="scenario-header">
+                <h2 style="color: #003A70; margin: 0;">Live Scenario Analysis</h2>
+                <div class="real-time-indicator">
+                    <span class="connection-status connected"></span>
+                    Real-time modeling active
+                </div>
+            </div>
+            
+            <div class="current-scenario">
+                <h3 style="color: #003A70; margin-bottom: 1rem;">Current Scenario Parameters</h3>
+                <div class="scenario-metric">
+                    <strong>Growth Rate Adjustment:</strong>
+                    <span class="scenario-value positive">+12%</span>
+                </div>
+                <div class="scenario-metric">
+                    <strong>Churn Impact:</strong>
+                    <span class="scenario-value negative">+3%</span>
+                </div>
+                <div class="scenario-metric">
+                    <strong>Price Change:</strong>
+                    <span class="scenario-value">+0%</span>
+                </div>
+            </div>
+            
+            <div class="scenario-projection">
+                <h3 style="color: #003A70; margin-bottom: 1rem;">3-Month Revenue Projection</h3>
+                <div class="projection-value">$7.0M</div>
+                <div class="projection-change">+8.6% from baseline</div>
+                <p style="margin-top: 1rem; color: #666;">
+                    Based on current parameters, your revenue trajectory shows strong growth potential 
+                    despite increased churn. The 12% growth rate adjustment more than compensates for 
+                    the 3% churn increase.
+                </p>
+            </div>
+        </div>
+        
+        <!-- AI-Generated Insights -->
+        <h2 style="color: #003A70; margin-bottom: 1rem;">AI-Powered Strategic Insights</h2>
+        <div class="ai-insights-grid">
+            <div class="ai-insight-card critical">
+                <div class="insight-header">
+                    <div class="insight-title">Churn Risk Mitigation Required</div>
+                    <div class="insight-confidence">
+                        <span>Confidence:</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 92%;"></div>
+                        </div>
+                        <span>92%</span>
+                    </div>
+                </div>
+                <p style="color: #666; margin-bottom: 1rem;">
+                    The 3% churn increase translates to approximately 37 at-risk customers. 
+                    Based on historical patterns, these are likely in the Mid-Market segment.
+                </p>
+                <p style="font-weight: 600; color: #E30613;">
+                    Potential Revenue Impact: -$420K/year
+                </p>
+            </div>
+            
+            <div class="ai-insight-card opportunity">
+                <div class="insight-header">
+                    <div class="insight-title">Growth Acceleration Opportunity</div>
+                    <div class="insight-confidence">
+                        <span>Confidence:</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 87%;"></div>
+                        </div>
+                        <span>87%</span>
+                    </div>
+                </div>
+                <p style="color: #666; margin-bottom: 1rem;">
+                    Your 12% growth rate adjustment indicates strong market momentum. 
+                    Similar patterns in Q2 2023 led to 15% actual growth when properly capitalized.
+                </p>
+                <p style="font-weight: 600; color: #00A650;">
+                    Potential Revenue Upside: +$840K/quarter
+                </p>
+            </div>
+            
+            <div class="ai-insight-card">
+                <div class="insight-header">
+                    <div class="insight-title">Price Elasticity Window</div>
+                    <div class="insight-confidence">
+                        <span>Confidence:</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 78%;"></div>
+                        </div>
+                        <span>78%</span>
+                    </div>
+                </div>
+                <p style="color: #666; margin-bottom: 1rem;">
+                    With 0% price change but 12% growth, you have room for a 5-7% price increase 
+                    without impacting demand elasticity.
+                </p>
+                <p style="font-weight: 600; color: #003A70;">
+                    Additional Revenue Potential: +$350K/year
+                </p>
+            </div>
+        </div>
+        
+        <!-- Action Recommendations -->
+        <div class="action-recommendations">
+            <h2 style="color: #003A70; margin-bottom: 1.5rem;">AI-Recommended Actions</h2>
+            
+            <div class="action-item">
+                <div class="action-icon">🎯</div>
+                <div class="action-details">
+                    <div class="action-title">Launch Retention Campaign for Mid-Market Segment</div>
+                    <div class="action-impact">Expected churn reduction: 1.5% | Revenue saved: $210K</div>
+                </div>
+                <button class="action-button">Execute</button>
+            </div>
+            
+            <div class="action-item">
+                <div class="action-icon">📈</div>
+                <div class="action-details">
+                    <div class="action-title">Accelerate Enterprise Sales Pipeline</div>
+                    <div class="action-impact">Capitalize on 12% growth momentum | Pipeline value: $2.1M</div>
+                </div>
+                <button class="action-button">Execute</button>
+            </div>
+            
+            <div class="action-item">
+                <div class="action-icon">💰</div>
+                <div class="action-details">
+                    <div class="action-title">Implement 5% Price Increase for New Customers</div>
+                    <div class="action-impact">Zero elasticity impact expected | Revenue gain: $175K/year</div>
+                </div>
+                <button class="action-button">Execute</button>
+            </div>
+            
+            <div class="action-item">
+                <div class="action-icon">🔍</div>
+                <div class="action-details">
+                    <div class="action-title">Deep-Dive Analysis on Churn Drivers</div>
+                    <div class="action-impact">Identify root causes | Prevention potential: 2% reduction</div>
+                </div>
+                <button class="action-button">Analyze</button>
+            </div>
+        </div>
+        
+        <!-- Neural Activity Indicator -->
+        <div class="neural-activity">
+            <div class="neural-indicator"></div>
+            <span>AI Neural Network Active - Processing 1.2M data points/second</span>
+        </div>
+    </div>
+    
+    <script>
+        // Voice recognition setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        
+        const voiceOrb = document.getElementById('voiceOrb');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        
+        voiceOrb.addEventListener('click', () => {
+            voiceOrb.classList.add('listening');
+            recognition.start();
+        });
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            addMessage(transcript, 'user');
+            processQuery(transcript);
+            voiceOrb.classList.remove('listening');
+        };
+        
+        recognition.onerror = () => {
+            voiceOrb.classList.remove('listening');
+        };
+        
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message) {
+                addMessage(message, 'user');
+                processQuery(message);
+                chatInput.value = '';
+            }
+        }
+        
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${sender === 'ai' ? 'AI' : 'U'}</div>
+                <div class="message-content">
+                    <div class="message-bubble">${text}</div>
+                    <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function processQuery(query) {
+            // Simulate AI processing
+            setTimeout(() => {
+                const lowerQuery = query.toLowerCase();
+                let response = '';
+                
+                if (lowerQuery.includes('revenue') || lowerQuery.includes('projection')) {
+                    response = `Based on your current scenario parameters (12% growth, 3% churn increase, 0% price change), 
+                    I project $7.0M in revenue over the next 3 months. This represents an 8.6% increase from baseline. 
+                    The strong growth rate is effectively offsetting the churn impact. I recommend focusing on retention 
+                    to maximize this growth potential.`;
+                } else if (lowerQuery.includes('churn') || lowerQuery.includes('retention')) {
+                    response = `The 3% churn increase is concerning but manageable. It affects approximately 37 customers, 
+                    primarily in the Mid-Market segment. I've identified 3 key drivers: 1) Feature gaps vs competitors, 
+                    2) Onboarding friction, and 3) Support response times. Implementing the retention campaign I suggested 
+                    could reduce churn by 1.5%, saving $210K in annual revenue.`;
+                } else if (lowerQuery.includes('price') || lowerQuery.includes('pricing')) {
+                    response = `Your current 0% price change with 12% growth indicates strong demand elasticity. 
+                    Historical data suggests you can implement a 5-7% price increase without impacting growth. 
+                    I recommend starting with 5% for new customers only, which would generate an additional $175K 
+                    annually with minimal risk.`;
+                } else if (lowerQuery.includes('action') || lowerQuery.includes('recommend')) {
+                    response = `My top 3 recommendations based on current data: 1) Launch immediate retention campaign 
+                    for at-risk Mid-Market accounts (ROI: 5x), 2) Accelerate Enterprise pipeline to capitalize on 
+                    growth momentum ($2.1M potential), 3) Implement strategic 5% pricing for new customers ($175K upside). 
+                    Would you like me to initiate any of these actions?`;
+                } else {
+                    response = `I'm analyzing that query against our current metrics. Could you be more specific about 
+                    which aspect you'd like to explore? I can provide insights on revenue projections, churn analysis, 
+                    pricing optimization, or strategic recommendations based on your scenario parameters.`;
+                }
+                
+                addMessage(response, 'ai');
+            }, 1500);
+        }
+        
+        // Simulate real-time updates
+        setInterval(() => {
+            const updates = [
+                { metric: 'Active Users', value: Math.floor(Math.random() * 50) + 8200 },
+                { metric: 'Pipeline Value', value: '$' + (Math.random() * 0.5 + 2.0).toFixed(1) + 'M' },
+                { metric: 'NPS Score', value: Math.floor(Math.random() * 5) + 70 },
+                { metric: 'Conversion Rate', value: (Math.random() * 5 + 30).toFixed(1) + '%' }
+            ];
+            
+            // Could update UI elements here
+        }, 10000);
+    </script>
+</body>
+</html>
