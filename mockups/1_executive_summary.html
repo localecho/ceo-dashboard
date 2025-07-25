@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Summary Dashboard - Strategic Performance Overview</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* BCG-style professional design */
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+        
+        .bcg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 2rem;
+            border-bottom: 3px solid #003A70;
+            margin-bottom: 2rem;
+        }
+        
+        .bcg-logo {
+            font-weight: 700;
+            color: #003A70;
+            font-size: 1.5rem;
+        }
+        
+        .report-meta {
+            text-align: right;
+            font-size: 0.875rem;
+            color: #666;
+        }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 1.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 0.5rem;
+        }
+        
+        .kpi-label {
+            font-size: 0.875rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .kpi-change {
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .positive { color: #00A650; }
+        .negative { color: #E30613; }
+        .neutral { color: #666; }
+        
+        .insight-box {
+            background: #FFF4E6;
+            border-left: 4px solid #FF6900;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .insight-title {
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+        }
+        
+        .matrix-container {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .footnotes {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .footnote-ref {
+            vertical-align: super;
+            font-size: 0.75rem;
+            color: #003A70;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        .data-table th {
+            background: #003A70;
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .strategic-message {
+            background: #003A70;
+            color: white;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .strategic-message h3 {
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-deep-dive {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="tufte-container">
+        <!-- BCG-style Header -->
+        <div class="bcg-header">
+            <div>
+                <div class="bcg-logo">BCG</div>
+                <h1 style="margin-top: 1rem; font-size: 2rem; color: #003A70;">
+                    Executive Performance Dashboard
+                </h1>
+                <p style="color: #666; margin-top: 0.5rem;">
+                    Strategic Overview & Key Performance Indicators
+                </p>
+            </div>
+            <div class="report-meta">
+                <strong>Prepared for:</strong> Executive Committee<br>
+                <strong>Date:</strong> November 25, 2024<br>
+                <strong>Period:</strong> Q4 2024 - Week 47<br>
+                <strong>Classification:</strong> Confidential
+            </div>
+        </div>
+        
+        <!-- Key Performance Indicators -->
+        <section>
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Enterprise Performance Snapshot
+            </h2>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Revenue Run Rate<a href="#fn1" class="footnote-ref">¹</a></div>
+                    <div class="kpi-value">$5.84M</div>
+                    <div class="kpi-change positive">↑ 12% YoY</div>
+                    <div style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">
+                        ARR basis
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">EBITDA Margin<a href="#fn2" class="footnote-ref">²</a></div>
+                    <div class="kpi-value">27.8%</div>
+                    <div class="kpi-change positive">↑ 3.2pp QoQ</div>
+                    <div style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">
+                        Above target
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Customer NPS<a href="#fn3" class="footnote-ref">³</a></div>
+                    <div class="kpi-value">72</div>
+                    <div class="kpi-change positive">↑ 8 pts</div>
+                    <div style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">
+                        World-class
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Cash Position<a href="#fn4" class="footnote-ref">⁴</a></div>
+                    <div class="kpi-value">$2.97M</div>
+                    <div class="kpi-change neutral">18mo runway</div>
+                    <div style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">
+                        Healthy
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Strategic Insight Box -->
+        <div class="insight-box">
+            <div class="insight-title">Key Strategic Insight</div>
+            <p>
+                The company has achieved a critical inflection point with EBITDA margin expansion of 320 basis points 
+                quarter-over-quarter, driven by operational efficiency gains and strategic price optimization. 
+                However, marketing lead generation remains 23% below target, presenting the primary growth constraint.
+            </p>
+        </div>
+        
+        <!-- Business Health Matrix -->
+        <section class="matrix-container">
+            <h2 style="color: #003A70; margin-bottom: 1.5rem;">Business Health Assessment Matrix</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Business Unit</th>
+                        <th>Performance Score</th>
+                        <th>Trend</th>
+                        <th>Key Metric</th>
+                        <th>Action Required</th>
+                        <th>Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Sales</strong></td>
+                        <td>82/100</td>
+                        <td class="positive">↑ Improving</td>
+                        <td>Pipeline: $2.4M (120% of target)</td>
+                        <td>Maintain momentum</td>
+                        <td style="color: #00A650;">Low</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Marketing</strong></td>
+                        <td>64/100</td>
+                        <td class="negative">↓ Declining</td>
+                        <td>Lead Gen: -23% vs. target</td>
+                        <td>Immediate intervention</td>
+                        <td style="color: #E30613;">High</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Product</strong></td>
+                        <td>91/100</td>
+                        <td class="positive">↑ Strong</td>
+                        <td>NPS: 72 (top quintile)</td>
+                        <td>Scale best practices</td>
+                        <td style="color: #00A650;">Low</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Operations</strong></td>
+                        <td>78/100</td>
+                        <td class="neutral">→ Stable</td>
+                        <td>Efficiency: 84%</td>
+                        <td>Process optimization</td>
+                        <td style="color: #FF6900;">Medium</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Finance</strong></td>
+                        <td>88/100</td>
+                        <td class="positive">↑ Improving</td>
+                        <td>DSO: 42 days (improving)</td>
+                        <td>Continue collections focus</td>
+                        <td style="color: #00A650;">Low</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Strategic Priorities -->
+        <div class="strategic-message">
+            <h3>Executive Action Priorities</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+                <div>
+                    <h4 style="color: #FF6900; margin-bottom: 0.5rem;">Immediate (0-30 days)</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>• Address marketing lead generation gap</li>
+                        <li>• Accelerate SDR hiring (2 positions)</li>
+                        <li>• Optimize paid channel allocation</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #FFD100; margin-bottom: 0.5rem;">Near-term (30-90 days)</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>• Implement sales velocity improvements</li>
+                        <li>• Launch customer expansion program</li>
+                        <li>• Complete Series A preparation</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #00A650; margin-bottom: 0.5rem;">Strategic (90+ days)</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>• Enter adjacent market segments</li>
+                        <li>• Build strategic partnerships</li>
+                        <li>• Scale platform capabilities</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Financial Performance Deep-Dive -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Financial Performance Analysis
+            </h2>
+            <div class="metric-deep-dive">
+                <div>
+                    <canvas id="revenue-composition" height="250"></canvas>
+                </div>
+                <div>
+                    <h3>Revenue Composition Insights</h3>
+                    <ul style="line-height: 1.8;">
+                        <li><strong>Recurring Revenue:</strong> 87% of total revenue (industry benchmark: 75%)<a href="#fn5" class="footnote-ref">⁵</a></li>
+                        <li><strong>Customer Concentration:</strong> Top 10 customers = 34% of revenue (healthy distribution)</li>
+                        <li><strong>Expansion Revenue:</strong> 23% of new revenue from existing customers</li>
+                        <li><strong>Churn Rate:</strong> 1.8% monthly (best-in-class for SMB segment)<a href="#fn6" class="footnote-ref">⁶</a></li>
+                    </ul>
+                    <div style="background: #f8f9fa; padding: 1rem; margin-top: 1rem; border-radius: 4px;">
+                        <strong>CFO Insight:</strong> Revenue quality metrics indicate strong product-market fit 
+                        with sustainable unit economics. LTV:CAC ratio of 13.2:1 significantly exceeds the 3:1 
+                        SaaS benchmark.
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Market Position -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Competitive Market Position
+            </h2>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <div>
+                    <canvas id="market-position" height="300"></canvas>
+                </div>
+                <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 4px;">
+                    <h3 style="color: #003A70; margin-bottom: 1rem;">Market Intelligence</h3>
+                    <p style="margin-bottom: 1rem;">
+                        <strong>Market Size:</strong> $2.3B TAM<a href="#fn7" class="footnote-ref">⁷</a><br>
+                        <strong>Growth Rate:</strong> 23% CAGR<br>
+                        <strong>Our Position:</strong> #3 in segment
+                    </p>
+                    <p style="font-size: 0.875rem; color: #666;">
+                        Based on win/loss analysis, we outperform on product quality (NPS: 72 vs. 
+                        industry avg: 42) but lag on brand awareness and channel partnerships.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footnotes -->
+        <div class="footnotes">
+            <h3 style="font-size: 0.875rem; color: #003A70; margin-bottom: 1rem;">Data Sources & Methodology</h3>
+            <p>
+                <span id="fn1">¹</span> <strong>Revenue Run Rate:</strong> Calculated as MRR × 12, based on November 2024 contracted recurring revenue. 
+                Includes only committed contracts, excludes one-time fees and professional services. Source: Internal billing system (Stripe), 
+                validated by Finance team on Nov 24, 2024.
+            </p>
+            <p>
+                <span id="fn2">²</span> <strong>EBITDA Margin:</strong> Earnings Before Interest, Taxes, Depreciation, and Amortization as percentage 
+                of revenue. Calculated using GAAP-compliant methodology, excluding stock-based compensation. Source: Management accounts, 
+                reviewed by external auditors (PwC).
+            </p>
+            <p>
+                <span id="fn3">³</span> <strong>Net Promoter Score (NPS):</strong> Based on quarterly customer survey (n=847, 68% response rate). 
+                Question: "How likely are you to recommend our product to a friend or colleague?" Scale 0-10. NPS = % Promoters - % Detractors. 
+                Survey conducted Oct 15-31, 2024 by independent firm (Qualtrics).
+            </p>
+            <p>
+                <span id="fn4">⁴</span> <strong>Cash Position:</strong> Total liquid assets including cash, cash equivalents, and marketable securities. 
+                Runway calculated as cash position divided by average monthly burn rate (last 6 months). Source: Bank statements reconciled daily, 
+                as of Nov 24, 2024 close.
+            </p>
+            <p>
+                <span id="fn5">⁵</span> <strong>Industry Benchmarks:</strong> SaaS Capital 2024 Annual Survey of 1,500+ B2B SaaS companies. 
+                Peer group defined as companies with $5-10M ARR in vertical SaaS categories.
+            </p>
+            <p>
+                <span id="fn6">⁶</span> <strong>Churn Rate:</strong> Logo churn calculated as customers lost / total customers at period start. 
+                Revenue churn includes downgrades. Benchmark source: KeyBanc Capital Markets SaaS Survey 2024.
+            </p>
+            <p>
+                <span id="fn7">⁷</span> <strong>Total Addressable Market (TAM):</strong> Based on BCG market sizing analysis using bottom-up 
+                methodology. Includes SMB segment (10-500 employees) in North America. Validated against Gartner and IDC reports.
+            </p>
+            <p style="margin-top: 1rem; font-style: italic;">
+                <strong>Disclaimer:</strong> This dashboard contains forward-looking statements based on current expectations and assumptions. 
+                Actual results may differ materially. All data current as of November 24, 2024, 11:59 PM EST. For questions regarding 
+                methodology or data sources, contact: analytics@company.com
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Revenue Composition Chart
+        const revenueCtx = document.getElementById('revenue-composition').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Subscription Revenue', 'Professional Services', 'One-time Fees', 'Other'],
+                datasets: [{
+                    data: [87, 8, 3, 2],
+                    backgroundColor: ['#003A70', '#00A650', '#FF6900', '#FFD100'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Revenue Composition (%)',
+                        font: { size: 16, weight: 'bold' },
+                        color: '#003A70'
+                    }
+                }
+            }
+        });
+        
+        // Market Position Chart
+        const marketCtx = document.getElementById('market-position').getContext('2d');
+        new Chart(marketCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Our Company',
+                    data: [{ x: 72, y: 27.8 }],
+                    backgroundColor: '#E30613',
+                    pointRadius: 15,
+                    pointStyle: 'star'
+                }, {
+                    label: 'Competitors',
+                    data: [
+                        { x: 45, y: 18 },
+                        { x: 38, y: 22 },
+                        { x: 52, y: 15 },
+                        { x: 41, y: 31 },
+                        { x: 48, y: 19 }
+                    ],
+                    backgroundColor: '#003A70',
+                    pointRadius: 10
+                }, {
+                    label: 'Industry Leaders',
+                    data: [
+                        { x: 65, y: 35 },
+                        { x: 68, y: 32 }
+                    ],
+                    backgroundColor: '#00A650',
+                    pointRadius: 12,
+                    pointStyle: 'triangle'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Customer Satisfaction (NPS Score)',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        min: 30,
+                        max: 80
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Profitability (EBITDA %)',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        min: 10,
+                        max: 40
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Market Position: Customer Satisfaction vs. Profitability',
+                        font: { size: 16, weight: 'bold' },
+                        color: '#003A70'
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

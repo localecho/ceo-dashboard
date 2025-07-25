@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Strategy Dashboard - Revenue Optimization & Market Analysis</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* BCG-style professional design */
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+        
+        .bcg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 2rem;
+            border-bottom: 3px solid #003A70;
+            margin-bottom: 2rem;
+        }
+        
+        .bcg-logo {
+            font-weight: 700;
+            color: #003A70;
+            font-size: 1.5rem;
+        }
+        
+        .pricing-tiers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .tier-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 2rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .tier-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .tier-basic { border-top: 4px solid #666; }
+        .tier-professional { 
+            border-top: 4px solid #003A70; 
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .tier-enterprise { border-top: 4px solid #00A650; }
+        
+        .tier-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tier-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 0.25rem;
+        }
+        
+        .tier-period {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tier-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .tier-features li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.875rem;
+        }
+        
+        .tier-features li:before {
+            content: "✓ ";
+            color: #00A650;
+            font-weight: 700;
+            margin-right: 0.5rem;
+        }
+        
+        .pricing-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .revenue-analysis {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        
+        .competitor-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.875rem;
+        }
+        
+        .competitor-table th {
+            background: #003A70;
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .competitor-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .price-point {
+            font-weight: 700;
+            color: #003A70;
+        }
+        
+        .market-position {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .position-leader { background: #E8F5E9; color: #00A650; }
+        .position-competitive { background: #FFF8E1; color: #F57C00; }
+        .position-premium { background: #E3F2FD; color: #003A70; }
+        
+        .service-package {
+            background: #fefaea;
+            border: 2px solid #FFD100;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+        
+        .package-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .package-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #003A70;
+        }
+        
+        .package-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00A650;
+        }
+        
+        .footnote-ref {
+            vertical-align: super;
+            font-size: 0.7rem;
+            color: #003A70;
+            font-weight: 600;
+        }
+        
+        .insight-callout {
+            background: #FFF4E6;
+            border-left: 4px solid #FF6900;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .footnotes {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .recommendation-box {
+            background: #003A70;
+            color: white;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .elasticity-chart {
+            background: white;
+            padding: 1.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="tufte-container">
+        <!-- BCG-style Header -->
+        <div class="bcg-header">
+            <div>
+                <div class="bcg-logo">BCG</div>
+                <h1 style="margin-top: 1rem; font-size: 2rem; color: #003A70;">
+                    Pricing Strategy Dashboard
+                </h1>
+                <p style="color: #666; margin-top: 0.5rem;">
+                    Revenue Optimization & Competitive Market Analysis
+                </p>
+            </div>
+            <div class="report-meta">
+                <strong>Department:</strong> Revenue Strategy<br>
+                <strong>Period:</strong> Q4 2024 - Week 47<br>
+                <strong>Last Updated:</strong> Nov 25, 2024 06:00 UTC<br>
+                <strong>Market Data:</strong> Real-time
+            </div>
+        </div>
+        
+        <!-- Key Pricing Metrics -->
+        <section>
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Pricing Performance Metrics
+            </h2>
+            <div class="pricing-metrics">
+                <div class="metric-card">
+                    <div class="metric-label">Average Revenue Per User<a href="#fn1" class="footnote-ref">¹</a></div>
+                    <div class="metric-value">$391</div>
+                    <div style="color: #00A650; font-weight: 600;">↑ 18% YoY</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Price Realization<a href="#fn2" class="footnote-ref">²</a></div>
+                    <div class="metric-value">87%</div>
+                    <div style="color: #E30613; font-weight: 600;">↓ 3pp QoQ</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Discount Rate<a href="#fn3" class="footnote-ref">³</a></div>
+                    <div class="metric-value">13%</div>
+                    <div style="color: #FFD100; font-weight: 600;">→ Stable</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Upsell Rate<a href="#fn4" class="footnote-ref">⁴</a></div>
+                    <div class="metric-value">34%</div>
+                    <div style="color: #00A650; font-weight: 600;">↑ 7pp QoQ</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Current Pricing Tiers -->
+        <section>
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                SaaS Pricing Structure
+            </h2>
+            <div class="pricing-tiers">
+                <div class="tier-card tier-basic">
+                    <div class="tier-name">Basic</div>
+                    <div class="tier-price">$99</div>
+                    <div class="tier-period">per user/month</div>
+                    <ul class="tier-features">
+                        <li>Core dashboard access</li>
+                        <li>5 user seats included</li>
+                        <li>Standard reports</li>
+                        <li>Email support</li>
+                        <li>30-day data retention</li>
+                    </ul>
+                    <div style="margin-top: 1.5rem; text-align: center;">
+                        <strong>23%</strong> of customers<br>
+                        <strong>12%</strong> of revenue
+                    </div>
+                </div>
+                
+                <div class="tier-card tier-professional">
+                    <div style="position: absolute; top: -10px; right: 20px; background: #FF6900; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                        MOST POPULAR
+                    </div>
+                    <div class="tier-name">Professional</div>
+                    <div class="tier-price">$299</div>
+                    <div class="tier-period">per user/month</div>
+                    <ul class="tier-features">
+                        <li>Everything in Basic</li>
+                        <li>Unlimited users</li>
+                        <li>Advanced analytics</li>
+                        <li>API access</li>
+                        <li>Priority support</li>
+                        <li>1-year data retention</li>
+                        <li>Custom integrations</li>
+                    </ul>
+                    <div style="margin-top: 1.5rem; text-align: center;">
+                        <strong>54%</strong> of customers<br>
+                        <strong>59%</strong> of revenue
+                    </div>
+                </div>
+                
+                <div class="tier-card tier-enterprise">
+                    <div class="tier-name">Enterprise</div>
+                    <div class="tier-price">Custom</div>
+                    <div class="tier-period">annual contract</div>
+                    <ul class="tier-features">
+                        <li>Everything in Professional</li>
+                        <li>Dedicated success manager</li>
+                        <li>Custom development</li>
+                        <li>SLA guarantees</li>
+                        <li>On-premise option</li>
+                        <li>Unlimited data retention</li>
+                        <li>White-label options</li>
+                    </ul>
+                    <div style="margin-top: 1.5rem; text-align: center;">
+                        <strong>23%</strong> of customers<br>
+                        <strong>29%</strong> of revenue
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Data Science as a Service Packages -->
+        <section>
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Data Science as a Service - Consulting Packages<a href="#fn5" class="footnote-ref">⁵</a>
+            </h2>
+            
+            <div class="service-package">
+                <div class="package-header">
+                    <div>
+                        <div class="package-title">Starter Package - Automated Insights</div>
+                        <div style="color: #666; font-size: 0.875rem;">Plug and chug text prompts into manus.im</div>
+                    </div>
+                    <div class="package-price">$1,150</div>
+                </div>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="padding: 0.5rem 0;">✓ 5 automated analyses at $150 each ($750 total)</li>
+                    <li style="padding: 0.5rem 0;">✓ 2 hours of Brigham's time for setup ($400)</li>
+                    <li style="padding: 0.5rem 0;">✓ 1 kick-off presentation</li>
+                    <li style="padding: 0.5rem 0;">✓ Basic CEO dashboard template</li>
+                </ul>
+                <div style="margin-top: 1rem; padding: 0.75rem; background: #E8F5E9; border-radius: 4px;">
+                    <strong>Target:</strong> Small businesses needing quick insights
+                </div>
+            </div>
+            
+            <div class="service-package">
+                <div class="package-header">
+                    <div>
+                        <div class="package-title">Professional Package - Guided Analytics</div>
+                        <div style="color: #666; font-size: 0.875rem;">Manus.im + manual optimization</div>
+                    </div>
+                    <div class="package-price">$2,150</div>
+                </div>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="padding: 0.5rem 0;">✓ 5 curated analyses at $50 each ($250 total)</li>
+                    <li style="padding: 0.5rem 0;">✓ 4 hours of Brigham's strategic time ($800)</li>
+                    <li style="padding: 0.5rem 0;">✓ 2 presentations (kick-off + monthly update)</li>
+                    <li style="padding: 0.5rem 0;">✓ 1 executive boardroom dashboard</li>
+                    <li style="padding: 0.5rem 0;">✓ 1 deep-dive analysis session</li>
+                    <li style="padding: 0.5rem 0;">✓ Monthly optimization</li>
+                </ul>
+                <div style="margin-top: 1rem; padding: 0.75rem; background: #E8F5E9; border-radius: 4px;">
+                    <strong>Target:</strong> Mid-market companies with growth focus
+                </div>
+            </div>
+            
+            <div class="service-package" style="border-color: #00A650; background: #f0faf5;">
+                <div class="package-header">
+                    <div>
+                        <div class="package-title">Enterprise Package - Strategic Intelligence</div>
+                        <div style="color: #666; font-size: 0.875rem;">Full-service data science partnership</div>
+                    </div>
+                    <div class="package-price">$8,500/mo</div>
+                </div>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="padding: 0.5rem 0;">✓ Unlimited analyses with priority queue</li>
+                    <li style="padding: 0.5rem 0;">✓ 20 hours of Brigham's strategic time</li>
+                    <li style="padding: 0.5rem 0;">✓ Weekly executive briefings</li>
+                    <li style="padding: 0.5rem 0;">✓ Custom ML models and algorithms</li>
+                    <li style="padding: 0.5rem 0;">✓ Real-time dashboard with alerts</li>
+                    <li style="padding: 0.5rem 0;">✓ Quarterly board presentations</li>
+                    <li style="padding: 0.5rem 0;">✓ Dedicated Slack channel</li>
+                </ul>
+                <div style="margin-top: 1rem; padding: 0.75rem; background: #00A650; color: white; border-radius: 4px;">
+                    <strong>Target:</strong> Enterprise clients requiring ongoing strategic insights
+                </div>
+            </div>
+        </section>
+        
+        <!-- Competitive Analysis -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Competitive Pricing Analysis<a href="#fn6" class="footnote-ref">⁶</a>
+            </h2>
+            <table class="competitor-table">
+                <thead>
+                    <tr>
+                        <th>Competitor</th>
+                        <th>Basic Tier</th>
+                        <th>Professional</th>
+                        <th>Enterprise</th>
+                        <th>Market Position</th>
+                        <th>Key Differentiator</th>
+                        <th>Win Rate vs.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #f8f9fa;">
+                        <td><strong>Our Platform</strong></td>
+                        <td class="price-point">$99</td>
+                        <td class="price-point">$299</td>
+                        <td class="price-point">Custom</td>
+                        <td><span class="market-position position-competitive">Competitive</span></td>
+                        <td>AI-powered insights</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Competitor A</td>
+                        <td>$79</td>
+                        <td>$249</td>
+                        <td>$999+</td>
+                        <td><span class="market-position position-leader">Leader</span></td>
+                        <td>Market share</td>
+                        <td>42%</td>
+                    </tr>
+                    <tr>
+                        <td>Competitor B</td>
+                        <td>$149</td>
+                        <td>$399</td>
+                        <td>Custom</td>
+                        <td><span class="market-position position-premium">Premium</span></td>
+                        <td>Feature depth</td>
+                        <td>67%</td>
+                    </tr>
+                    <tr>
+                        <td>Competitor C</td>
+                        <td>$49</td>
+                        <td>$199</td>
+                        <td>$599+</td>
+                        <td><span class="market-position position-competitive">Competitive</span></td>
+                        <td>Price point</td>
+                        <td>58%</td>
+                    </tr>
+                    <tr>
+                        <td>Competitor D</td>
+                        <td>$89</td>
+                        <td>$289</td>
+                        <td>Custom</td>
+                        <td><span class="market-position position-competitive">Competitive</span></td>
+                        <td>Integrations</td>
+                        <td>71%</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="insight-callout">
+                <strong>Competitive Insight:</strong> We're positioned 18% above market average but justify premium through 
+                superior AI capabilities. Win rate analysis shows we perform best against premium competitors (67% win rate) 
+                but struggle against value players. Recommendation: Introduce a "Starter" tier at $59 to capture price-sensitive segment.
+            </div>
+        </section>
+        
+        <!-- Price Elasticity Analysis -->
+        <section class="elasticity-chart">
+            <h2 style="color: #003A70; margin-bottom: 1.5rem;">Price Elasticity & Revenue Optimization<a href="#fn7" class="footnote-ref">⁷</a></h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <canvas id="elasticity-curve" height="300"></canvas>
+                </div>
+                <div>
+                    <h3 style="color: #003A70; margin-bottom: 1rem;">Elasticity Insights</h3>
+                    <table style="width: 100%; font-size: 0.875rem;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 0.5rem;">Price Point</th>
+                                <th style="padding: 0.5rem;">Conversion</th>
+                                <th style="padding: 0.5rem;">Revenue Index</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 0.5rem;">$249 (-$50)</td>
+                                <td style="padding: 0.5rem;">38%</td>
+                                <td style="padding: 0.5rem;">112</td>
+                            </tr>
+                            <tr style="background: #E8F5E9;">
+                                <td style="padding: 0.5rem;"><strong>$299 (current)</strong></td>
+                                <td style="padding: 0.5rem;"><strong>31%</strong></td>
+                                <td style="padding: 0.5rem;"><strong>100</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem;">$349 (+$50)</td>
+                                <td style="padding: 0.5rem;">24%</td>
+                                <td style="padding: 0.5rem;">91</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem;">$399 (+$100)</td>
+                                <td style="padding: 0.5rem;">17%</td>
+                                <td style="padding: 0.5rem;">76</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
+                        <strong>Optimal Price:</strong> $249 would increase revenue by 12% but may impact brand positioning.
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Revenue Mix Analysis -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Revenue Mix & Growth Drivers
+            </h2>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <div>
+                    <canvas id="revenue-mix" height="300"></canvas>
+                </div>
+                <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 4px;">
+                    <h3 style="color: #003A70; margin-bottom: 1rem;">Revenue Breakdown</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <strong>Subscription Revenue:</strong> 76%<br>
+                        <span style="color: #666; font-size: 0.875rem;">$3.65M monthly recurring</span>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <strong>Professional Services:</strong> 18%<br>
+                        <span style="color: #666; font-size: 0.875rem;">$864K monthly average</span>
+                    </div>
+                    <div>
+                        <strong>Add-ons & Overages:</strong> 6%<br>
+                        <span style="color: #666; font-size: 0.875rem;">$288K monthly average</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Strategic Recommendations -->
+        <div class="recommendation-box">
+            <h3 style="color: white; margin-bottom: 1rem;">Pricing Strategy Recommendations</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h4 style="color: #FFD100;">Immediate Actions (Q1 2025)</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 1.8;">
+                        <li>Launch "Starter" tier at $59 to capture SMB segment</li>
+                        <li>Implement dynamic discounting algorithm (max 20%)</li>
+                        <li>Bundle Data Science services with Enterprise SaaS</li>
+                        <li>Test usage-based pricing for API calls</li>
+                    </ol>
+                </div>
+                <div>
+                    <h4 style="color: #FFD100;">Strategic Initiatives (2025)</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 1.8;">
+                        <li>Develop value-based pricing model</li>
+                        <li>Create industry-specific packages</li>
+                        <li>Launch partner/reseller pricing program</li>
+                        <li>Implement AI-driven price optimization</li>
+                    </ol>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                <strong style="color: #FFD100;">Revenue Impact:</strong> These initiatives projected to increase ARR by $2.1M (23%) 
+                within 12 months while improving gross margins by 4.2 percentage points.
+            </div>
+        </div>
+        
+        <!-- Footnotes -->
+        <div class="footnotes">
+            <h3 style="font-size: 0.875rem; color: #003A70; margin-bottom: 1rem;">Data Sources & Methodology</h3>
+            <p>
+                <span id="fn1">¹</span> <strong>Average Revenue Per User (ARPU):</strong> Calculated as total monthly recurring revenue 
+                divided by total active paying users. Includes base subscription fees plus average add-on revenue. Excludes one-time 
+                setup fees and professional services. Updated daily from billing system.
+            </p>
+            <p>
+                <span id="fn2">²</span> <strong>Price Realization:</strong> Actual revenue collected as percentage of list price. 
+                Accounts for discounts, promotions, and negotiated rates. Industry benchmark: 85-90% for B2B SaaS. Lower realization 
+                may indicate excessive discounting or poor value communication.
+            </p>
+            <p>
+                <span id="fn3">³</span> <strong>Discount Rate:</strong> Weighted average discount across all active contracts. 
+                Calculated as (List Price - Actual Price) / List Price. Excludes volume discounts and multi-year prepayment discounts. 
+                Monitored weekly for revenue leakage.
+            </p>
+            <p>
+                <span id="fn4">⁴</span> <strong>Upsell Rate:</strong> Percentage of customers who upgraded tier or added services 
+                in trailing 12 months. Includes tier upgrades, seat expansion, and add-on purchases. Key indicator of product value 
+                and customer success effectiveness.
+            </p>
+            <p>
+                <span id="fn5">⁵</span> <strong>Data Science Service Pricing:</strong> Based on competitive analysis of consulting rates 
+                and value-based pricing models. Manus.im automation reduces analysis time by 70%, enabling competitive pricing. 
+                Brigham's hourly rate set at $200 based on market rates for senior data scientists.
+            </p>
+            <p>
+                <span id="fn6">⁶</span> <strong>Competitive Analysis:</strong> Data from G2, Capterra, and vendor websites as of 
+                November 2024. Win rates from sales CRM win/loss analysis (n=487 competitive deals). Market position based on 
+                Gartner quadrant placement and market share data.
+            </p>
+            <p>
+                <span id="fn7">⁷</span> <strong>Price Elasticity:</strong> Derived from A/B testing and historical pricing changes. 
+                Elasticity coefficient: -1.3 (elastic demand). Model accounts for competitive responses and market conditions. 
+                95% confidence intervals shown. Analysis refreshed quarterly.
+            </p>
+            <p style="margin-top: 1rem; font-style: italic;">
+                <strong>Pricing Governance:</strong> All pricing decisions require approval from Revenue Committee. Discounts >20% 
+                require VP approval. Annual price increases capped at 10% for existing customers. Price testing follows ethical 
+                guidelines with customer notification.
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Price Elasticity Curve
+        const elasticityCtx = document.getElementById('elasticity-curve').getContext('2d');
+        new Chart(elasticityCtx, {
+            type: 'line',
+            data: {
+                labels: ['$199', '$249', '$299', '$349', '$399', '$449'],
+                datasets: [{
+                    label: 'Revenue Index',
+                    data: [89, 112, 100, 91, 76, 58],
+                    borderColor: '#003A70',
+                    backgroundColor: 'rgba(0, 58, 112, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Conversion Rate',
+                    data: [47, 38, 31, 24, 17, 11],
+                    borderColor: '#00A650',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Price Elasticity Analysis - Professional Tier',
+                        font: { size: 16, weight: 'bold' },
+                        color: '#003A70'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Revenue Index'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Conversion Rate (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Revenue Mix Chart
+        const revenueMixCtx = document.getElementById('revenue-mix').getContext('2d');
+        new Chart(revenueMixCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+                datasets: [{
+                    label: 'Subscription',
+                    data: [3.2, 3.3, 3.4, 3.5, 3.5, 3.6, 3.6, 3.7, 3.7, 3.8, 3.65],
+                    backgroundColor: '#003A70'
+                }, {
+                    label: 'Professional Services',
+                    data: [0.7, 0.72, 0.75, 0.78, 0.8, 0.82, 0.84, 0.85, 0.86, 0.87, 0.864],
+                    backgroundColor: '#00A650'
+                }, {
+                    label: 'Add-ons',
+                    data: [0.2, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.288],
+                    backgroundColor: '#FFD100'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Revenue Mix Trend ($M)',
+                        font: { size: 16, weight: 'bold' },
+                        color: '#003A70'
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                    },
+                    y: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Revenue ($M)'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

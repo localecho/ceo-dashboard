@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Performance Dashboard - P&L Analysis & Cash Flow Management</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* BCG-style professional design */
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+        
+        .bcg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 2rem;
+            border-bottom: 3px solid #003A70;
+            margin-bottom: 2rem;
+        }
+        
+        .bcg-logo {
+            font-weight: 700;
+            color: #003A70;
+            font-size: 1.5rem;
+        }
+        
+        .financial-kpis {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .kpi-box {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 1.5rem;
+            border-radius: 4px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-box::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #003A70, #00A650);
+        }
+        
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 0.25rem;
+        }
+        
+        .kpi-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .kpi-change {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+        
+        .pl-statement {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 2rem 0;
+        }
+        
+        .pl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        
+        .pl-table th {
+            background: #003A70;
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .pl-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .pl-table tr.total-row {
+            font-weight: 700;
+            background: #f8f9fa;
+        }
+        
+        .pl-table tr.section-total {
+            font-weight: 600;
+            background: #fafafa;
+        }
+        
+        .variance-positive { color: #00A650; }
+        .variance-negative { color: #E30613; }
+        
+        .cash-flow-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        
+        .burn-rate-indicator {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+        
+        .burn-healthy { background: #E8F5E9; color: #00A650; }
+        .burn-warning { background: #FFF8E1; color: #F57C00; }
+        .burn-critical { background: #FFEBEE; color: #E30613; }
+        
+        .expense-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .metric-sparkline {
+            display: inline-block;
+            margin-left: 1rem;
+            vertical-align: middle;
+        }
+        
+        .cohort-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            margin: 1.5rem 0;
+        }
+        
+        .cohort-table th {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .cohort-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .unit-economics {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+        
+        .economics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .economics-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .footnote-ref {
+            vertical-align: super;
+            font-size: 0.7rem;
+            color: #003A70;
+            font-weight: 600;
+        }
+        
+        .insight-callout {
+            background: #FFF4E6;
+            border-left: 4px solid #FF6900;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .footnotes {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .forecast-scenario {
+            background: #003A70;
+            color: white;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="tufte-container">
+        <!-- BCG-style Header -->
+        <div class="bcg-header">
+            <div>
+                <div class="bcg-logo">BCG</div>
+                <h1 style="margin-top: 1rem; font-size: 2rem; color: #003A70;">
+                    Financial Performance Dashboard
+                </h1>
+                <p style="color: #666; margin-top: 0.5rem;">
+                    Comprehensive P&L Analysis & Financial Health Monitoring
+                </p>
+            </div>
+            <div class="report-meta">
+                <strong>Department:</strong> Finance & Accounting<br>
+                <strong>Period:</strong> November 2024<br>
+                <strong>Last Updated:</strong> Nov 25, 2024 06:00 UTC<br>
+                <strong>Audit Status:</strong> Reviewed
+            </div>
+        </div>
+        
+        <!-- Key Financial KPIs -->
+        <section>
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Financial Performance Snapshot
+            </h2>
+            <div class="financial-kpis">
+                <div class="kpi-box">
+                    <div class="kpi-label">Total Revenue<a href="#fn1" class="footnote-ref">¹</a></div>
+                    <div class="kpi-value">$487K</div>
+                    <div class="kpi-change variance-positive">↑ 12% MoM</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                        YTD: $4.82M
+                    </div>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-label">Gross Margin<a href="#fn2" class="footnote-ref">²</a></div>
+                    <div class="kpi-value">72.3%</div>
+                    <div class="kpi-change variance-positive">↑ 0.5pp</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                        Target: 70%
+                    </div>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-label">EBITDA<a href="#fn3" class="footnote-ref">³</a></div>
+                    <div class="kpi-value">$135K</div>
+                    <div class="kpi-change variance-positive">↑ 75.3%</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                        Margin: 27.7%
+                    </div>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-label">Cash Balance<a href="#fn4" class="footnote-ref">⁴</a></div>
+                    <div class="kpi-value">$2.97M</div>
+                    <div class="kpi-change variance-negative">↓ $145K</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                        18mo runway
+                    </div>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-label">Burn Rate<a href="#fn5" class="footnote-ref">⁵</a></div>
+                    <div class="kpi-value">$165K</div>
+                    <div class="kpi-change variance-positive">↓ 5%</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                        Net: -$28K
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- P&L Statement -->
+        <section class="pl-statement">
+            <h2 style="color: #003A70; margin-bottom: 1.5rem;">Profit & Loss Statement - November 2024<a href="#fn6" class="footnote-ref">⁶</a></h2>
+            <table class="pl-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40%;">Line Item</th>
+                        <th style="text-align: right;">Actual</th>
+                        <th style="text-align: right;">Budget</th>
+                        <th style="text-align: right;">Variance</th>
+                        <th style="text-align: right;">% Var</th>
+                        <th style="text-align: right;">YTD Actual</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="6" style="background: #f0f0f0; font-weight: 600;">REVENUE</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 1.5rem;">Subscription Revenue</td>
+                        <td style="text-align: right;">$423,000</td>
+                        <td style="text-align: right;">$385,000</td>
+                        <td style="text-align: right;" class="variance-positive">$38,000</td>
+                        <td style="text-align: right;" class="variance-positive">+9.9%</td>
+                        <td style="text-align: right;">$4,187,000</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 1.5rem;">Professional Services</td>
+                        <td style="text-align: right;">$39,000</td>
+                        <td style="text-align: right;">$45,000</td>
+                        <td style="text-align: right;" class="variance-negative">($6,000)</td>
+                        <td style="text-align: right;" class="variance-negative">-13.3%</td>
+                        <td style="text-align: right;">$423,000</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 1.5rem;">Other Revenue</td>
+                        <td style="text-align: right;">$25,000</td>
+                        <td style="text-align: right;">$20,000</td>
+                        <td style="text-align: right;" class="variance-positive">$5,000</td>
+                        <td style="text-align: right;" class="variance-positive">+25.0%</td>
+                        <td style="text-align: right;">$213,000</td>
+                    </tr>
+                    <tr class="section-total">
+                        <td>Total Revenue</td>
+                        <td style="text-align: right;">$487,000</td>
+                        <td style="text-align: right;">$450,000</td>
+                        <td style="text-align: right;" class="variance-positive">$37,000</td>
+                        <td style="text-align: right;" class="variance-positive">+8.2%</td>
+                        <td style="text-align: right;">$4,823,000</td>
+                    </tr>
+                    
+                    <tr>
+                        <td colspan="6" style="background: #f0f0f0; font-weight: 600; padding-top: 1rem;">COST OF GOODS SOLD</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 1.5rem;">Infrastructure Costs</td>
+                        <td style="text-align: right;">$87,000</td>
+                        <td style="text-align: right;">$95,000</td>
+                        <td style="text-align: right;" class="variance-positive">$8,000</td>
+                        <td style="text-align: right;" class="variance-positive">-8.4%</td>
+                        <td style="text-align: right;">$912,000</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 1.5rem;">Third-party Licenses</td>
+                        <td style="text-align: right;">$48,000</td>
+                        <td style="text-align: right;">$45,000</td>
+                        <td style="text-align: right;" class="variance-negative">($3,000)</td>
+                        <td style="text-align: right;" class="variance-negative">+6.7%</td>
+                        <td style="text-align: right;">$468,000</td>
+                    </tr>
+                    <tr class="section-total">
+                        <td>Total COGS</td>
+                        <td style="text-align: right;">$135,000</td>
+                        <td style="text-align: right;">$140,000</td>
+                        <td style="text-align: right;" class="variance-positive">$5,000</td>
+                        <td style="text-align: right;" class="variance-positive">-3.6%</td>
+                        <td style="text-align: right;">$1,380,000</td>
+                    </tr>
+                    <tr class="section-total">
+                        <td>Gross Profit</td>
+                        <td style="text-align: right;">$352,000</td>
+                        <td style="text-align: right;">$310,000</td>
+                        <td style="text-align: right;" class="variance-positive">$42,000</td>
+                        <td style="text-align: right;" class="variance-positive">+13.5%</td>
+                        <td style="text-align: right;">$3,443,000</td>
+                    </tr>
+                    
+                    <tr>
+                        <td colspan="6" style="background: #f0f0f0; font-weight: 600; padding-top: 1rem;">OPERATING EXPENSES</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 1.5rem;">Sales & Marketing</td>
+                        <td style="text-align: right;">$98,000</td>
+                        <td style="text-align: right;">$105,000</td>
+                        <td style="text-align: right;" class="variance-positive">$7,000</td>
+                        <td style="text-align: right;" class="variance-positive">-6.7%</td>
+                        <td style="text-align: right;">$1,067,000</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 1.5rem;">Research & Development</td>
+                        <td style="text-align: right;">$87,000</td>
+                        <td style="text-align: right;">$85,000</td>
+                        <td style="text-align: right;" class="variance-negative">($2,000)</td>
+                        <td style="text-align: right;" class="variance-negative">+2.4%</td>
+                        <td style="text-align: right;">$892,000</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 1.5rem;">General & Administrative</td>
+                        <td style="text-align: right;">$32,000</td>
+                        <td style="text-align: right;">$35,000</td>
+                        <td style="text-align: right;" class="variance-positive">$3,000</td>
+                        <td style="text-align: right;" class="variance-positive">-8.6%</td>
+                        <td style="text-align: right;">$367,000</td>
+                    </tr>
+                    <tr class="section-total">
+                        <td>Total Operating Expenses</td>
+                        <td style="text-align: right;">$217,000</td>
+                        <td style="text-align: right;">$225,000</td>
+                        <td style="text-align: right;" class="variance-positive">$8,000</td>
+                        <td style="text-align: right;" class="variance-positive">-3.6%</td>
+                        <td style="text-align: right;">$2,326,000</td>
+                    </tr>
+                    
+                    <tr class="total-row">
+                        <td>EBITDA</td>
+                        <td style="text-align: right;">$135,000</td>
+                        <td style="text-align: right;">$85,000</td>
+                        <td style="text-align: right;" class="variance-positive">$50,000</td>
+                        <td style="text-align: right;" class="variance-positive">+58.8%</td>
+                        <td style="text-align: right;">$1,117,000</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>EBITDA Margin %</td>
+                        <td style="text-align: right;">27.7%</td>
+                        <td style="text-align: right;">18.9%</td>
+                        <td style="text-align: right;" class="variance-positive">+8.8pp</td>
+                        <td style="text-align: right;">—</td>
+                        <td style="text-align: right;">23.2%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Cash Flow Analysis -->
+        <section class="cash-flow-section">
+            <h2 style="color: #003A70; margin-bottom: 1.5rem;">Cash Flow Analysis<a href="#fn7" class="footnote-ref">⁷</a></h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h3 style="color: #003A70; margin-bottom: 1rem;">Monthly Cash Movement</h3>
+                    <canvas id="cash-flow-chart" height="300"></canvas>
+                </div>
+                <div>
+                    <h3 style="color: #003A70; margin-bottom: 1rem;">Cash Flow Summary</h3>
+                    <table style="width: 100%; font-size: 0.875rem;">
+                        <tr>
+                            <td style="padding: 0.5rem;">Beginning Cash</td>
+                            <td style="text-align: right; font-weight: 600;">$3,115,000</td>
+                        </tr>
+                        <tr style="background: #f8f9fa;">
+                            <td style="padding: 0.5rem;">Cash from Operations</td>
+                            <td style="text-align: right; font-weight: 600; color: #00A650;">+$147,000</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem;">Cash from Investing</td>
+                            <td style="text-align: right; font-weight: 600; color: #E30613;">-$45,000</td>
+                        </tr>
+                        <tr style="background: #f8f9fa;">
+                            <td style="padding: 0.5rem;">Cash from Financing</td>
+                            <td style="text-align: right; font-weight: 600; color: #E30613;">-$250,000</td>
+                        </tr>
+                        <tr style="border-top: 2px solid #003A70;">
+                            <td style="padding: 0.5rem; font-weight: 700;">Ending Cash</td>
+                            <td style="text-align: right; font-weight: 700;">$2,967,000</td>
+                        </tr>
+                    </table>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
+                        <h4 style="color: #003A70; margin-bottom: 0.5rem;">Runway Analysis</h4>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Current Burn Rate:</span>
+                            <span class="burn-rate-indicator burn-healthy">$165K/mo</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Months of Runway:</span>
+                            <span style="font-weight: 700; font-size: 1.25rem;">18 months</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="insight-callout">
+                <strong>Cash Management Insight:</strong> Despite strong EBITDA performance, cash decreased due to 
+                $250K debt prepayment. Operating cash flow remains healthy at $147K. Recommend maintaining 
+                12-month minimum cash buffer ($1.98M) for strategic flexibility.
+            </div>
+        </section>
+        
+        <!-- Expense Breakdown -->
+        <section class="expense-breakdown">
+            <div>
+                <h3 style="color: #003A70; margin-bottom: 1rem;">Expense Distribution by Category</h3>
+                <canvas id="expense-pie" height="300"></canvas>
+            </div>
+            <div>
+                <h3 style="color: #003A70; margin-bottom: 1rem;">Expense Efficiency Metrics</h3>
+                <table style="width: 100%; font-size: 0.875rem;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 0.5rem;">Category</th>
+                            <th style="padding: 0.5rem; text-align: right;">% of Revenue</th>
+                            <th style="padding: 0.5rem; text-align: right;">Benchmark</th>
+                            <th style="padding: 0.5rem; text-align: right;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 0.5rem;">Sales & Marketing</td>
+                            <td style="padding: 0.5rem; text-align: right;">20.1%</td>
+                            <td style="padding: 0.5rem; text-align: right;">25-35%</td>
+                            <td style="padding: 0.5rem; text-align: right; color: #00A650;">✓ Efficient</td>
+                        </tr>
+                        <tr style="background: #fafafa;">
+                            <td style="padding: 0.5rem;">R&D</td>
+                            <td style="padding: 0.5rem; text-align: right;">17.9%</td>
+                            <td style="padding: 0.5rem; text-align: right;">15-25%</td>
+                            <td style="padding: 0.5rem; text-align: right; color: #00A650;">✓ On Target</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem;">G&A</td>
+                            <td style="padding: 0.5rem; text-align: right;">6.6%</td>
+                            <td style="padding: 0.5rem; text-align: right;">10-15%</td>
+                            <td style="padding: 0.5rem; text-align: right; color: #00A650;">✓ Lean</td>
+                        </tr>
+                        <tr style="background: #fafafa;">
+                            <td style="padding: 0.5rem;">Total OpEx</td>
+                            <td style="padding: 0.5rem; text-align: right;">44.5%</td>
+                            <td style="padding: 0.5rem; text-align: right;">50-75%</td>
+                            <td style="padding: 0.5rem; text-align: right; color: #00A650;">✓ Efficient</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Unit Economics -->
+        <section class="unit-economics">
+            <h2 style="color: #003A70; margin-bottom: 1rem;">Unit Economics Analysis<a href="#fn8" class="footnote-ref">⁸</a></h2>
+            <div class="economics-grid">
+                <div class="economics-card">
+                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.5rem;">Customer Acquisition Cost</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: #003A70;">$1,847</div>
+                    <div style="font-size: 0.875rem; color: #00A650; font-weight: 600;">↓ 12% QoQ</div>
+                </div>
+                <div class="economics-card">
+                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.5rem;">Lifetime Value</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: #003A70;">$24,300</div>
+                    <div style="font-size: 0.875rem; color: #00A650; font-weight: 600;">↑ 8% QoQ</div>
+                </div>
+                <div class="economics-card">
+                    <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.5rem;">LTV:CAC Ratio</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: #00A650;">13.2:1</div>
+                    <div style="font-size: 0.875rem; color: #666;">Target: >3:1 ✓</div>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem;">
+                <h3 style="color: #003A70; margin-bottom: 1rem;">Payback Period Analysis</h3>
+                <canvas id="payback-chart" height="200"></canvas>
+            </div>
+        </section>
+        
+        <!-- Revenue Cohort Analysis -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Monthly Revenue Cohort Analysis<a href="#fn9" class="footnote-ref">⁹</a>
+            </h2>
+            <table class="cohort-table">
+                <thead>
+                    <tr>
+                        <th>Cohort</th>
+                        <th>Month 0</th>
+                        <th>Month 1</th>
+                        <th>Month 2</th>
+                        <th>Month 3</th>
+                        <th>Month 6</th>
+                        <th>Month 12</th>
+                        <th>LTV</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight: 600;">Q1 2024</td>
+                        <td style="background: #003A70; color: white;">$42K</td>
+                        <td>98%</td>
+                        <td>97%</td>
+                        <td>96%</td>
+                        <td>93%</td>
+                        <td>91%</td>
+                        <td style="font-weight: 600;">$23.8K</td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="font-weight: 600;">Q2 2024</td>
+                        <td style="background: #003A70; color: white;">$51K</td>
+                        <td>99%</td>
+                        <td>98%</td>
+                        <td>97%</td>
+                        <td>94%</td>
+                        <td>92%</td>
+                        <td style="font-weight: 600;">$24.3K</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600;">Q3 2024</td>
+                        <td style="background: #003A70; color: white;">$58K</td>
+                        <td>99%</td>
+                        <td>98%</td>
+                        <td>97%</td>
+                        <td>95%</td>
+                        <td>—</td>
+                        <td style="font-weight: 600;">$24.8K*</td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="font-weight: 600;">Q4 2024</td>
+                        <td style="background: #003A70; color: white;">$67K</td>
+                        <td>99%</td>
+                        <td>98%</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td style="font-weight: 600;">$25.2K*</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">*Projected based on historical retention curves</p>
+        </section>
+        
+        <!-- Financial Forecast -->
+        <div class="forecast-scenario">
+            <h3 style="color: white; margin-bottom: 1rem;">Financial Forecast Scenarios - FY 2025</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+                <div style="text-align: center;">
+                    <h4 style="color: #FFD100; margin-bottom: 0.5rem;">Conservative</h4>
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">Revenue: $7.2M</div>
+                    <div>EBITDA: $1.8M (25%)</div>
+                    <div>Cash End: $3.8M</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.875rem;">20% growth</div>
+                </div>
+                <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.3); border-right: 1px solid rgba(255,255,255,0.3);">
+                    <h4 style="color: #FFD100; margin-bottom: 0.5rem;">Base Case</h4>
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">Revenue: $8.4M</div>
+                    <div>EBITDA: $2.5M (30%)</div>
+                    <div>Cash End: $4.5M</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.875rem;">40% growth</div>
+                </div>
+                <div style="text-align: center;">
+                    <h4 style="color: #FFD100; margin-bottom: 0.5rem;">Aggressive</h4>
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">Revenue: $9.6M</div>
+                    <div>EBITDA: $2.9M (30%)</div>
+                    <div>Cash End: $4.9M</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.875rem;">60% growth</div>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                <strong>Key Assumptions:</strong> Base case assumes 40% revenue growth driven by 30% customer growth 
+                and 10% ARPU expansion. OpEx growth capped at 25% through operational leverage. No additional 
+                funding required in any scenario.
+            </div>
+        </div>
+        
+        <!-- Footnotes -->
+        <div class="footnotes">
+            <h3 style="font-size: 0.875rem; color: #003A70; margin-bottom: 1rem;">Data Sources & Methodology</h3>
+            <p>
+                <span id="fn1">¹</span> <strong>Total Revenue:</strong> Recognized according to ASC 606 revenue recognition standards. 
+                Includes all contracted recurring revenue, professional services delivered, and other revenue streams. Excludes 
+                deferred revenue and customer deposits. Source: NetSuite ERP, reconciled daily.
+            </p>
+            <p>
+                <span id="fn2">²</span> <strong>Gross Margin:</strong> Calculated as (Revenue - COGS) / Revenue. COGS includes direct 
+                infrastructure costs, third-party licenses, and customer success costs. Excludes sales commissions and R&D. 
+                Industry benchmark for SaaS: 70-80%.
+            </p>
+            <p>
+                <span id="fn3">³</span> <strong>EBITDA:</strong> Earnings Before Interest, Taxes, Depreciation, and Amortization. 
+                Excludes stock-based compensation ($23K monthly) and one-time charges. Used as proxy for operating cash generation. 
+                Reconciliation available in supplemental materials.
+            </p>
+            <p>
+                <span id="fn4">⁴</span> <strong>Cash Balance:</strong> Includes all operating accounts, money market funds, and 
+                short-term investments with maturity <90 days. Excludes restricted cash ($150K) and security deposits. 
+                Daily cash position from treasury management system.
+            </p>
+            <p>
+                <span id="fn5">⁵</span> <strong>Burn Rate:</strong> Monthly net cash consumption calculated as cash outflows minus 
+                cash inflows. Gross burn includes all operating expenses and COGS. Net burn accounts for revenue collection. 
+                3-month rolling average used to smooth fluctuations.
+            </p>
+            <p>
+                <span id="fn6">⁶</span> <strong>P&L Statement:</strong> Prepared according to US GAAP. Budget variances calculated 
+                against board-approved annual operating plan. YTD figures through November 30, 2024. Intercompany transactions 
+                eliminated. Management reporting basis.
+            </p>
+            <p>
+                <span id="fn7">⁷</span> <strong>Cash Flow Analysis:</strong> Direct method cash flow showing actual cash movements. 
+                Operating cash includes customer collections and vendor payments. Investing includes capex and acquisitions. 
+                Financing includes debt service and equity transactions.
+            </p>
+            <p>
+                <span id="fn8">⁸</span> <strong>Unit Economics:</strong> CAC calculated as total S&M expense / new customers acquired. 
+                LTV based on gross margin × average customer lifetime. Payback period is months to recover CAC through gross profit. 
+                Benchmarks from SaaS Capital and OpenView reports.
+            </p>
+            <p>
+                <span id="fn9">⁹</span> <strong>Cohort Analysis:</strong> Revenue retention by customer acquisition cohort. Month 0 = 
+                first full month of revenue. Percentages show revenue retained vs. initial month. Churned customers show as 
+                reduction; expansion shows as >100% possible.
+            </p>
+            <p style="margin-top: 1rem; font-style: italic;">
+                <strong>Audit Note:</strong> Financial statements reviewed by CFO and external auditors. Management representations 
+                current as of report date. Material subsequent events disclosed in footnotes. For detailed reconciliations, 
+                contact finance@company.com.
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Cash Flow Chart
+        const cashFlowCtx = document.getElementById('cash-flow-chart').getContext('2d');
+        new Chart(cashFlowCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+                datasets: [{
+                    label: 'Operating Cash Flow',
+                    data: [125, 132, 138, 142, 145, 147],
+                    backgroundColor: '#00A650'
+                }, {
+                    label: 'Investing Cash Flow',
+                    data: [-20, -25, -30, -35, -40, -45],
+                    backgroundColor: '#FF6900'
+                }, {
+                    label: 'Financing Cash Flow',
+                    data: [0, 0, -50, 0, 0, -250],
+                    backgroundColor: '#E30613'
+                }, {
+                    label: 'Net Cash Flow',
+                    data: [105, 107, 58, 107, 105, -148],
+                    type: 'line',
+                    borderColor: '#003A70',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Cash Flow Components ($K)',
+                        font: { size: 14, weight: 'bold' },
+                        color: '#003A70'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Cash Flow ($K)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Expense Pie Chart
+        const expensePieCtx = document.getElementById('expense-pie').getContext('2d');
+        new Chart(expensePieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Salaries & Benefits', 'Marketing & Advertising', 'Infrastructure', 'Professional Services', 'Other OpEx'],
+                datasets: [{
+                    data: [187, 42, 87, 23, 13],
+                    backgroundColor: ['#003A70', '#00A650', '#FF6900', '#FFD100', '#666'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Total Operating Expenses: $352K',
+                        font: { size: 14, weight: 'bold' },
+                        color: '#003A70'
+                    },
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Payback Period Chart
+        const paybackCtx = document.getElementById('payback-chart').getContext('2d');
+        new Chart(paybackCtx, {
+            type: 'line',
+            data: {
+                labels: ['Month 0', 'Month 3', 'Month 6', 'Month 9', 'Month 12', 'Month 15', 'Month 18'],
+                datasets: [{
+                    label: 'Cumulative Gross Profit',
+                    data: [0, 450, 900, 1350, 1800, 2250, 2700],
+                    borderColor: '#00A650',
+                    backgroundColor: 'rgba(0, 166, 80, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'CAC ($1,847)',
+                    data: [1847, 1847, 1847, 1847, 1847, 1847, 1847],
+                    borderColor: '#E30613',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Customer Payback Period: 4.1 months',
+                        font: { size: 14, weight: 'bold' },
+                        color: '#003A70'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Cumulative Value ($)'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -4,435 +4,500 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Executive Cockpit - CEO Dashboard</title>
+    <link rel="stylesheet" href="assets/tufte.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f0f;
-            color: #ffffff;
-            padding: 20px;
-        }
-        
-        .dashboard {
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        
-        .header {
+        /* Executive-specific styles following Tufte principles */
+        .executive-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 20px 30px;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            align-items: baseline;
+            border-bottom: 2px solid #111;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
         }
         
-        .header h1 {
-            font-size: 28px;
-            font-weight: 300;
-            letter-spacing: 2px;
+        .company-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
         }
         
-        .header-stats {
-            display: flex;
-            gap: 30px;
+        .report-date {
+            font-size: 0.875rem;
+            color: #666;
         }
         
-        .header-stat {
+        /* Key metrics summary */
+        .key-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+            padding: 2rem 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .key-metric {
             text-align: center;
         }
         
-        .header-stat-value {
-            font-size: 24px;
+        .key-metric-value {
+            font-size: 2.5rem;
             font-weight: 600;
-            color: #4ecdc4;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            margin-bottom: 0.25rem;
         }
         
-        .header-stat-label {
-            font-size: 12px;
-            color: #888;
+        .key-metric-label {
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.05em;
+            color: #666;
         }
         
-        .metrics-grid {
+        /* Sparkline integration */
+        .metric-sparkline {
+            display: inline-block;
+            margin-left: 1rem;
+            vertical-align: middle;
+        }
+        
+        /* Department performance table */
+        .department-table {
+            margin: 2rem 0;
+        }
+        
+        .performance-bar {
+            display: inline-block;
+            height: 10px;
+            background: #e5e5e5;
+            position: relative;
+            width: 100px;
+            margin-right: 0.5rem;
+        }
+        
+        .performance-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: #666;
+        }
+        
+        /* Critical metrics section */
+        .critical-section {
+            margin: 3rem 0;
+            padding: 1.5rem;
+            background: #fefefe;
+            border: 1px solid #ddd;
+        }
+        
+        .critical-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #d91919;
+        }
+        
+        /* Small multiples for trends */
+        .trend-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 1.5rem;
+            margin: 2rem 0;
         }
         
-        .metric-card {
-            background: linear-gradient(135deg, #1e1e30 0%, #2a2a3e 100%);
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid #333;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        .trend-item {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 1rem;
         }
         
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(78, 205, 196, 0.2);
-        }
-        
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: #4ecdc4;
-        }
-        
-        .metric-value {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 10px 0;
-        }
-        
-        .metric-change {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
+        .trend-header {
+            font-size: 0.875rem;
             font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
         }
         
-        .positive {
-            background: rgba(39, 174, 96, 0.2);
-            color: #27ae60;
+        .trend-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
         
-        .negative {
-            background: rgba(231, 76, 60, 0.2);
-            color: #e74c3c;
+        .trend-chart {
+            height: 60px;
+            margin-top: 0.5rem;
         }
         
-        .chart-container {
-            background: #1e1e30;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            height: 300px;
+        /* Annotations */
+        .annotation {
+            font-size: 0.875rem;
+            color: #666;
+            font-style: italic;
+            margin-top: 0.5rem;
+            padding-left: 1rem;
+            border-left: 2px solid #ddd;
         }
         
-        .bottom-section {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 20px;
+        /* Health indicator */
+        .health-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
         }
         
-        .bottleneck-alert {
-            background: linear-gradient(135deg, #2a1e1e 0%, #3e2a2a 100%);
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid #e74c3c;
-        }
+        .health-good { background: #0d7d0d; }
+        .health-warning { background: #f59e0b; }
+        .health-critical { background: #d91919; }
         
-        .bottleneck-alert h3 {
-            color: #e74c3c;
-            margin-bottom: 15px;
-        }
-        
-        .quick-actions {
-            background: #1e1e30;
-            padding: 25px;
-            border-radius: 12px;
+        /* Action items */
+        .action-list {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
         }
         
         .action-item {
-            padding: 10px 15px;
-            margin: 10px 0;
-            background: rgba(78, 205, 196, 0.1);
-            border-left: 3px solid #4ecdc4;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        
-        .action-item:hover {
-            background: rgba(78, 205, 196, 0.2);
-        }
-        
-        .department-scores {
-            background: #1e1e30;
-            padding: 25px;
-            border-radius: 12px;
-        }
-        
-        .score-bar {
-            margin: 15px 0;
-        }
-        
-        .score-bar-label {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 14px;
+            align-items: center;
         }
         
-        .score-bar-track {
+        .action-priority {
+            display: inline-block;
+            width: 8px;
             height: 8px;
-            background: #333;
-            border-radius: 4px;
-            overflow: hidden;
+            border-radius: 50%;
+            margin-right: 1rem;
         }
         
-        .score-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4ecdc4 0%, #44a3aa 100%);
-            transition: width 1s ease;
-        }
-        
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-        
-        .sparkline {
-            margin-top: 10px;
-            height: 40px;
-        }
+        .priority-high { background: #d91919; }
+        .priority-medium { background: #f59e0b; }
+        .priority-low { background: #10b981; }
     </style>
 </head>
 <body>
-    <div class="dashboard">
+    <div class="tufte-container">
         <!-- Header -->
-        <div class="header">
-            <h1>EXECUTIVE COCKPIT</h1>
-            <div class="header-stats">
-                <div class="header-stat">
-                    <div class="header-stat-value pulse">87%</div>
-                    <div class="header-stat-label">Company Health</div>
-                </div>
-                <div class="header-stat">
-                    <div class="header-stat-value">18 months</div>
-                    <div class="header-stat-label">Cash Runway</div>
-                </div>
-                <div class="header-stat">
-                    <div class="header-stat-value" id="current-time">--:--</div>
-                    <div class="header-stat-label">Last Updated</div>
-                </div>
+        <div class="executive-header">
+            <div>
+                <div class="company-name">Acme Corporation</div>
+                <h1>Executive Performance Summary</h1>
+            </div>
+            <div class="report-date">
+                Week 47, 2024<br>
+                <span class="tufte-small tufte-muted">Generated: November 25, 2024</span>
             </div>
         </div>
         
-        <!-- Key Metrics -->
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-label">Monthly Recurring Revenue</div>
-                <div class="metric-value">$487K</div>
-                <span class="metric-change positive">↑ 12% MoM</span>
-                <canvas id="mrr-sparkline" class="sparkline"></canvas>
+        <!-- Key Metrics Summary -->
+        <div class="key-metrics">
+            <div class="key-metric">
+                <div class="key-metric-value">$487K</div>
+                <div class="key-metric-label">Monthly Recurring Revenue</div>
+                <div class="tufte-metric-change tufte-metric-positive">↑ 12%</div>
             </div>
-            
-            <div class="metric-card">
-                <div class="metric-label">Active Customers</div>
-                <div class="metric-value">1,247</div>
-                <span class="metric-change positive">↑ 47 net new</span>
-                <canvas id="customers-sparkline" class="sparkline"></canvas>
+            <div class="key-metric">
+                <div class="key-metric-value">87%</div>
+                <div class="key-metric-label">Company Health Score</div>
+                <div class="tufte-metric-change tufte-metric-positive">↑ 3pp</div>
             </div>
-            
-            <div class="metric-card">
-                <div class="metric-label">Monthly Burn Rate</div>
-                <div class="metric-value">$165K</div>
-                <span class="metric-change positive">↓ 5% improved</span>
-                <canvas id="burn-sparkline" class="sparkline"></canvas>
+            <div class="key-metric">
+                <div class="key-metric-value">18mo</div>
+                <div class="key-metric-label">Cash Runway</div>
+                <div class="tufte-metric-change tufte-muted">→ 0</div>
+            </div>
+            <div class="key-metric">
+                <div class="key-metric-value">$165K</div>
+                <div class="key-metric-label">Monthly Burn Rate</div>
+                <div class="tufte-metric-change tufte-metric-positive">↓ 5%</div>
             </div>
         </div>
         
-        <!-- Growth Chart -->
-        <div class="chart-container">
-            <canvas id="growth-chart"></canvas>
-        </div>
+        <!-- Department Performance -->
+        <section>
+            <h2>Department Performance</h2>
+            <table class="tufte-table">
+                <thead>
+                    <tr>
+                        <th>Department</th>
+                        <th>Performance</th>
+                        <th>Score</th>
+                        <th>Trend</th>
+                        <th>Key Metric</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Sales</td>
+                        <td>
+                            <div class="performance-bar">
+                                <div class="performance-fill" style="width: 82%"></div>
+                            </div>
+                            <span class="tufte-number">82%</span>
+                        </td>
+                        <td class="tufte-number">B+</td>
+                        <td class="tufte-metric-positive">↑</td>
+                        <td>Pipeline: $2.4M</td>
+                        <td><span class="health-indicator health-good"></span>On Track</td>
+                    </tr>
+                    <tr>
+                        <td>Marketing</td>
+                        <td>
+                            <div class="performance-bar">
+                                <div class="performance-fill" style="width: 64%"></div>
+                            </div>
+                            <span class="tufte-number">64%</span>
+                        </td>
+                        <td class="tufte-number">C</td>
+                        <td class="tufte-metric-negative">↓</td>
+                        <td>Lead Gen: -23%</td>
+                        <td><span class="health-indicator health-critical"></span>Critical</td>
+                    </tr>
+                    <tr>
+                        <td>Product</td>
+                        <td>
+                            <div class="performance-bar">
+                                <div class="performance-fill" style="width: 91%"></div>
+                            </div>
+                            <span class="tufte-number">91%</span>
+                        </td>
+                        <td class="tufte-number">A</td>
+                        <td class="tufte-metric-positive">↑</td>
+                        <td>NPS: 72</td>
+                        <td><span class="health-indicator health-good"></span>Excellent</td>
+                    </tr>
+                    <tr>
+                        <td>Operations</td>
+                        <td>
+                            <div class="performance-bar">
+                                <div class="performance-fill" style="width: 78%"></div>
+                            </div>
+                            <span class="tufte-number">78%</span>
+                        </td>
+                        <td class="tufte-number">B</td>
+                        <td class="tufte-muted">→</td>
+                        <td>Efficiency: 84%</td>
+                        <td><span class="health-indicator health-good"></span>Stable</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="annotation">
+                Performance scores calculated using weighted KPIs specific to each department. 
+                Trend indicates change from previous week.
+            </div>
+        </section>
         
-        <!-- Bottom Section -->
-        <div class="bottom-section">
-            <!-- Department Scores -->
-            <div class="department-scores">
-                <h3>Department Scorecard</h3>
-                <div class="score-bar">
-                    <div class="score-bar-label">
-                        <span>Sales</span>
-                        <span>82%</span>
-                    </div>
-                    <div class="score-bar-track">
-                        <div class="score-bar-fill" style="width: 82%"></div>
-                    </div>
+        <!-- Critical Focus Areas -->
+        <section class="critical-section">
+            <h3 class="critical-header">⚠️ Critical Focus: Marketing Lead Generation</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h4>Current Situation</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>• Lead volume down 23% vs. target</li>
+                        <li>• MQL conversion rate decreased to 34.2%</li>
+                        <li>• Cost per lead increased by $47</li>
+                        <li>• Primary channel (Paid Ads) underperforming</li>
+                    </ul>
                 </div>
-                <div class="score-bar">
-                    <div class="score-bar-label">
-                        <span>Marketing</span>
-                        <span>64%</span>
-                    </div>
-                    <div class="score-bar-track">
-                        <div class="score-bar-fill" style="width: 64%"></div>
-                    </div>
-                </div>
-                <div class="score-bar">
-                    <div class="score-bar-label">
-                        <span>Product</span>
-                        <span>91%</span>
-                    </div>
-                    <div class="score-bar-track">
-                        <div class="score-bar-fill" style="width: 91%"></div>
-                    </div>
-                </div>
-                <div class="score-bar">
-                    <div class="score-bar-label">
-                        <span>Operations</span>
-                        <span>78%</span>
-                    </div>
-                    <div class="score-bar-track">
-                        <div class="score-bar-fill" style="width: 78%"></div>
-                    </div>
+                <div>
+                    <h4>Recommended Actions</h4>
+                    <ul class="action-list">
+                        <li class="action-item">
+                            <span class="action-priority priority-high"></span>
+                            Increase ad spend allocation to performing channels
+                        </li>
+                        <li class="action-item">
+                            <span class="action-priority priority-high"></span>
+                            Hire 2 SDRs to boost outbound efforts
+                        </li>
+                        <li class="action-item">
+                            <span class="action-priority priority-medium"></span>
+                            Launch new ICP-focused campaign
+                        </li>
+                        <li class="action-item">
+                            <span class="action-priority priority-medium"></span>
+                            Review and optimize lead scoring model
+                        </li>
+                    </ul>
                 </div>
             </div>
-            
-            <!-- Bottleneck Alert -->
-            <div class="bottleneck-alert">
-                <h3>🚨 Bottleneck Alert</h3>
-                <div style="font-size: 20px; margin: 10px 0;">Lead Generation</div>
-                <div style="color: #e74c3c;">-23% vs target</div>
-                <div style="margin-top: 10px; color: #888;">Impact: High</div>
-                <div style="margin-top: 10px; font-size: 14px;">
-                    Marketing qualified leads are significantly below target, 
-                    impacting sales pipeline for next quarter.
+        </section>
+        
+        <!-- Key Metrics Trends -->
+        <section>
+            <h2>Key Metrics Trends</h2>
+            <div class="trend-grid">
+                <div class="trend-item">
+                    <div class="trend-header">
+                        <span>Revenue Growth</span>
+                        <span class="tufte-small tufte-muted">Monthly</span>
+                    </div>
+                    <div class="trend-value">$487K</div>
+                    <canvas id="revenue-trend" class="trend-chart"></canvas>
+                    <div class="tufte-small tufte-muted">Target: $500K by Q4</div>
+                </div>
+                <div class="trend-item">
+                    <div class="trend-header">
+                        <span>Customer Count</span>
+                        <span class="tufte-small tufte-muted">Total Active</span>
+                    </div>
+                    <div class="trend-value">1,247</div>
+                    <canvas id="customer-trend" class="trend-chart"></canvas>
+                    <div class="tufte-small tufte-muted">Net new: +47 this month</div>
+                </div>
+                <div class="trend-item">
+                    <div class="trend-header">
+                        <span>Burn Rate</span>
+                        <span class="tufte-small tufte-muted">Monthly</span>
+                    </div>
+                    <div class="trend-value">$165K</div>
+                    <canvas id="burn-trend" class="trend-chart"></canvas>
+                    <div class="tufte-small tufte-muted">5% improvement MoM</div>
                 </div>
             </div>
-            
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <h3>Quick Actions</h3>
-                <div class="action-item">• Hire 2 SDRs</div>
-                <div class="action-item">• Increase Ad Spend 25%</div>
-                <div class="action-item">• Launch New ICP Campaign</div>
-                <div class="action-item">• Review Lead Scoring</div>
-            </div>
+        </section>
+        
+        <!-- Financial Summary Table -->
+        <section>
+            <h2>Financial Summary</h2>
+            <table class="tufte-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Current</th>
+                        <th>Previous</th>
+                        <th>Change</th>
+                        <th>YTD</th>
+                        <th>Target</th>
+                        <th>Variance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Revenue</td>
+                        <td class="tufte-number">$487,000</td>
+                        <td class="tufte-number">$435,000</td>
+                        <td class="tufte-number tufte-metric-positive">+12.0%</td>
+                        <td class="tufte-number">$4,823,000</td>
+                        <td class="tufte-number">$5,000,000</td>
+                        <td class="tufte-number tufte-metric-negative">-3.5%</td>
+                    </tr>
+                    <tr>
+                        <td>Gross Margin</td>
+                        <td class="tufte-number">72.3%</td>
+                        <td class="tufte-number">71.8%</td>
+                        <td class="tufte-number tufte-metric-positive">+0.5pp</td>
+                        <td class="tufte-number">71.9%</td>
+                        <td class="tufte-number">70.0%</td>
+                        <td class="tufte-number tufte-metric-positive">+1.9pp</td>
+                    </tr>
+                    <tr>
+                        <td>Operating Expenses</td>
+                        <td class="tufte-number">$352,000</td>
+                        <td class="tufte-number">$358,000</td>
+                        <td class="tufte-number tufte-metric-positive">-1.7%</td>
+                        <td class="tufte-number">$3,468,000</td>
+                        <td class="tufte-number">$3,400,000</td>
+                        <td class="tufte-number tufte-metric-negative">+2.0%</td>
+                    </tr>
+                    <tr>
+                        <td>EBITDA</td>
+                        <td class="tufte-number">$135,000</td>
+                        <td class="tufte-number">$77,000</td>
+                        <td class="tufte-number tufte-metric-positive">+75.3%</td>
+                        <td class="tufte-number">$1,355,000</td>
+                        <td class="tufte-number">$1,600,000</td>
+                        <td class="tufte-number tufte-metric-negative">-15.3%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Footer -->
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #ddd;">
+            <p class="tufte-small tufte-muted">
+                This report contains confidential business information. 
+                Data accuracy validated as of report generation date.
+                For questions, contact: analytics@acmecorp.com
+            </p>
         </div>
     </div>
     
     <script>
-        // Update time
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('current-time').textContent = 
-                now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        }
-        updateTime();
-        setInterval(updateTime, 1000);
+        // Minimal sparkline-style charts following Tufte principles
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            },
+            scales: {
+                x: { display: false },
+                y: { display: false }
+            },
+            elements: {
+                point: { radius: 0 },
+                line: { borderWidth: 2 }
+            }
+        };
         
-        // Create sparklines
-        function createSparkline(canvasId, data, color) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: Array(data.length).fill(''),
-                    datasets: [{
-                        data: data,
-                        borderColor: color,
-                        borderWidth: 2,
-                        fill: false,
-                        pointRadius: 0,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { display: false },
-                        y: { display: false }
-                    }
-                }
-            });
-        }
-        
-        // Initialize sparklines
-        createSparkline('mrr-sparkline', [420, 430, 435, 445, 460, 475, 487], '#4ecdc4');
-        createSparkline('customers-sparkline', [1150, 1170, 1185, 1200, 1220, 1235, 1247], '#4ecdc4');
-        createSparkline('burn-sparkline', [175, 172, 170, 168, 167, 166, 165], '#27ae60');
-        
-        // Create growth chart
-        const growthCtx = document.getElementById('growth-chart').getContext('2d');
-        new Chart(growthCtx, {
+        // Revenue trend
+        new Chart(document.getElementById('revenue-trend'), {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                labels: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N'],
                 datasets: [{
-                    label: 'Revenue Growth',
-                    data: [320, 340, 365, 385, 410, 430, 460, 487, 515, 545, 580, 620],
-                    borderColor: '#4ecdc4',
-                    backgroundColor: 'rgba(78, 205, 196, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'Target',
-                    data: [320, 350, 380, 410, 440, 470, 500, 530, 560, 590, 620, 650],
-                    borderColor: '#888',
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    tension: 0.4,
+                    data: [320, 340, 365, 385, 410, 430, 445, 460, 475, 487, 487],
+                    borderColor: '#666',
                     fill: false
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: { color: '#fff' }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Revenue Growth Trajectory (in thousands)',
-                        color: '#fff',
-                        font: { size: 16 }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: '#333' },
-                        ticks: { color: '#888' }
-                    },
-                    y: {
-                        grid: { color: '#333' },
-                        ticks: { 
-                            color: '#888',
-                            callback: function(value) {
-                                return '$' + value + 'K';
-                            }
-                        }
-                    }
-                }
-            }
+            options: chartOptions
         });
         
-        // Animate score bars on load
-        setTimeout(() => {
-            document.querySelectorAll('.score-bar-fill').forEach(bar => {
-                bar.style.width = bar.style.width;
-            });
-        }, 100);
+        // Customer trend
+        new Chart(document.getElementById('customer-trend'), {
+            type: 'line',
+            data: {
+                labels: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N'],
+                datasets: [{
+                    data: [980, 1020, 1080, 1120, 1150, 1170, 1185, 1200, 1220, 1235, 1247],
+                    borderColor: '#666',
+                    fill: false
+                }]
+            },
+            options: chartOptions
+        });
+        
+        // Burn rate trend
+        new Chart(document.getElementById('burn-trend'), {
+            type: 'line',
+            data: {
+                labels: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N'],
+                datasets: [{
+                    data: [195, 190, 185, 180, 175, 172, 170, 168, 167, 166, 165],
+                    borderColor: '#666',
+                    fill: false
+                }]
+            },
+            options: chartOptions
+        });
     </script>
 </body>
 </html>

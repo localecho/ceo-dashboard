@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEO Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <h1>CEO Dashboard</h1>
+            <div class="header-info">
+                <span id="health-score" class="health-score">
+                    Health Score: <span class="score-value">--</span>
+                </span>
+                <span class="last-updated">Last Updated: <span id="last-updated">--</span></span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <main class="dashboard-main">
+            <!-- Bottleneck Alert -->
+            <section class="widget bottleneck-widget">
+                <h2>🚨 Current Bottleneck</h2>
+                <div id="bottleneck-content" class="bottleneck-content">
+                    <p class="loading">Loading...</p>
+                </div>
+            </section>
+
+            <!-- Metrics Overview -->
+            <section class="widget metrics-overview">
+                <h2>📊 Key Metrics Status</h2>
+                <div id="metrics-grid" class="metrics-grid">
+                    <p class="loading">Loading metrics...</p>
+                </div>
+            </section>
+
+            <!-- Category Performance -->
+            <section class="widget category-performance">
+                <h2>📈 Performance by Category</h2>
+                <div id="category-chart"></div>
+            </section>
+
+            <!-- Trend Analysis -->
+            <section class="widget trend-analysis">
+                <h2>📉 30-Day Trends</h2>
+                <div id="trend-chart"></div>
+            </section>
+
+            <!-- Weekly Review Section -->
+            <section class="widget weekly-review">
+                <h2>📝 Weekly Review</h2>
+                <div class="review-actions">
+                    <button id="start-review" class="btn btn-primary">Start Weekly Review</button>
+                    <select id="week-selector" class="week-selector">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div id="review-content" class="review-content" style="display: none;">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- Action Items -->
+            <section class="widget action-items">
+                <h2>✅ Recommended Actions</h2>
+                <div id="actions-list" class="actions-list">
+                    <p class="loading">Analyzing...</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <p>CEO Dashboard © 2024 | <a href="#" id="export-btn">Export Report</a></p>
+        </footer>
+    </div>
+
+    <!-- Metric Input Modal -->
+    <div id="metric-input-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Update Metric Value</h3>
+            <form id="metric-input-form">
+                <input type="hidden" id="metric-id" name="metric_id">
+                <div class="form-group">
+                    <label for="metric-name">Metric:</label>
+                    <span id="metric-name"></span>
+                </div>
+                <div class="form-group">
+                    <label for="metric-value">Value:</label>
+                    <input type="number" id="metric-value" name="value" step="0.01" required>
+                    <span id="metric-unit"></span>
+                </div>
+                <div class="form-group">
+                    <label for="metric-notes">Notes (optional):</label>
+                    <textarea id="metric-notes" name="notes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Insights Dashboard - Retention & Growth Analytics</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* BCG-style professional design */
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+        
+        .bcg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 2rem;
+            border-bottom: 3px solid #003A70;
+            margin-bottom: 2rem;
+        }
+        
+        .bcg-logo {
+            font-weight: 700;
+            color: #003A70;
+            font-size: 1.5rem;
+        }
+        
+        .customer-segments {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .segment-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 1.5rem;
+            border-radius: 4px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .segment-card:hover {
+            border-color: #003A70;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .segment-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .segment-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 0.25rem;
+        }
+        
+        .segment-label {
+            font-size: 0.875rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .nps-breakdown {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .nps-category {
+            padding: 1.5rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .promoters { background: #E8F5E9; border: 2px solid #00A650; }
+        .passives { background: #FFF8E1; border: 2px solid #FFD100; }
+        .detractors { background: #FFEBEE; border: 2px solid #E30613; }
+        
+        .churn-risk-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.875rem;
+        }
+        
+        .churn-risk-table th {
+            background: #003A70;
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .churn-risk-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .risk-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .risk-high { background: #FFEBEE; color: #E30613; }
+        .risk-medium { background: #FFF8E1; color: #F57C00; }
+        .risk-low { background: #E8F5E9; color: #00A650; }
+        
+        .health-score-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .behavior-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .behavior-bar {
+            width: 200px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0 1rem;
+        }
+        
+        .behavior-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #003A70, #00A650);
+        }
+        
+        .expansion-matrix {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        
+        .footnote-ref {
+            vertical-align: super;
+            font-size: 0.7rem;
+            color: #003A70;
+            font-weight: 600;
+        }
+        
+        .insight-callout {
+            background: #FFF4E6;
+            border-left: 4px solid #FF6900;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .footnotes {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .recommendation-box {
+            background: #003A70;
+            color: white;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .recommendation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="tufte-container">
+        <!-- BCG-style Header -->
+        <div class="bcg-header">
+            <div>
+                <div class="bcg-logo">BCG</div>
+                <h1 style="margin-top: 1rem; font-size: 2rem; color: #003A70;">
+                    Customer Insights Dashboard
+                </h1>
+                <p style="color: #666; margin-top: 0.5rem;">
+                    Retention Analytics & Customer Lifetime Value Optimization
+                </p>
+            </div>
+            <div class="report-meta">
+                <strong>Department:</strong> Customer Success<br>
+                <strong>Period:</strong> Q4 2024 - Week 47<br>
+                <strong>Last Updated:</strong> Nov 25, 2024 06:00 UTC<br>
+                <strong>Next Review:</strong> Dec 2, 2024
+            </div>
+        </div>
+        
+        <!-- Customer Segments Overview -->
+        <section>
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Customer Segmentation Analysis
+            </h2>
+            <div class="customer-segments">
+                <div class="segment-card">
+                    <div class="segment-icon">🏢</div>
+                    <div class="segment-label">Enterprise<a href="#fn1" class="footnote-ref">¹</a></div>
+                    <div class="segment-value">127</div>
+                    <div style="color: #00A650; font-weight: 600;">↑ 12% QoQ</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                        59% of revenue
+                    </div>
+                </div>
+                <div class="segment-card">
+                    <div class="segment-icon">🏭</div>
+                    <div class="segment-label">Mid-Market<a href="#fn2" class="footnote-ref">²</a></div>
+                    <div class="segment-value">384</div>
+                    <div style="color: #00A650; font-weight: 600;">↑ 8% QoQ</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                        29% of revenue
+                    </div>
+                </div>
+                <div class="segment-card">
+                    <div class="segment-icon">🏪</div>
+                    <div class="segment-label">SMB<a href="#fn3" class="footnote-ref">³</a></div>
+                    <div class="segment-value">736</div>
+                    <div style="color: #E30613; font-weight: 600;">↓ 3% QoQ</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                        12% of revenue
+                    </div>
+                </div>
+                <div class="segment-card">
+                    <div class="segment-icon">📊</div>
+                    <div class="segment-label">Total Active</div>
+                    <div class="segment-value">1,247</div>
+                    <div style="color: #00A650; font-weight: 600;">↑ 4% QoQ</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                        $391 ARPU
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- NPS Breakdown -->
+        <section>
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Net Promoter Score Analysis<a href="#fn4" class="footnote-ref">⁴</a>
+            </h2>
+            <div class="nps-breakdown">
+                <div class="nps-category promoters">
+                    <h3 style="color: #00A650; margin-bottom: 0.5rem;">Promoters (9-10)</h3>
+                    <div style="font-size: 3rem; font-weight: 700; color: #00A650;">54%</div>
+                    <div style="font-size: 1.25rem; font-weight: 600;">673 customers</div>
+                    <ul style="text-align: left; margin-top: 1rem; font-size: 0.875rem;">
+                        <li>Average tenure: 2.3 years</li>
+                        <li>Expansion rate: 23%</li>
+                        <li>Referral rate: 4.2/year</li>
+                    </ul>
+                </div>
+                <div class="nps-category passives">
+                    <h3 style="color: #F57C00; margin-bottom: 0.5rem;">Passives (7-8)</h3>
+                    <div style="font-size: 3rem; font-weight: 700; color: #F57C00;">28%</div>
+                    <div style="font-size: 1.25rem; font-weight: 600;">349 customers</div>
+                    <ul style="text-align: left; margin-top: 1rem; font-size: 0.875rem;">
+                        <li>Average tenure: 1.1 years</li>
+                        <li>Expansion rate: 8%</li>
+                        <li>At-risk for churn: 31%</li>
+                    </ul>
+                </div>
+                <div class="nps-category detractors">
+                    <h3 style="color: #E30613; margin-bottom: 0.5rem;">Detractors (0-6)</h3>
+                    <div style="font-size: 3rem; font-weight: 700; color: #E30613;">18%</div>
+                    <div style="font-size: 1.25rem; font-weight: 600;">225 customers</div>
+                    <ul style="text-align: left; margin-top: 1rem; font-size: 0.875rem;">
+                        <li>Average tenure: 0.7 years</li>
+                        <li>Support tickets: 8.3/mo</li>
+                        <li>Churn probability: 67%</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <h3 style="font-size: 2.5rem; color: #003A70;">NPS Score: 72</h3>
+                <p style="color: #666;">Industry benchmark: 42 | Top quartile performance</p>
+            </div>
+        </section>
+        
+        <!-- Customer Health & Behavior -->
+        <section class="health-score-grid">
+            <div>
+                <h3 style="color: #003A70; margin-bottom: 1rem;">Customer Health Score Distribution<a href="#fn5" class="footnote-ref">⁵</a></h3>
+                <canvas id="health-distribution" height="250"></canvas>
+            </div>
+            <div>
+                <h3 style="color: #003A70; margin-bottom: 1rem;">Key Behavior Indicators</h3>
+                <div class="behavior-metric">
+                    <span>Product Adoption</span>
+                    <div class="behavior-bar">
+                        <div class="behavior-fill" style="width: 78%"></div>
+                    </div>
+                    <span style="font-weight: 600;">78%</span>
+                </div>
+                <div class="behavior-metric">
+                    <span>Feature Utilization</span>
+                    <div class="behavior-bar">
+                        <div class="behavior-fill" style="width: 64%"></div>
+                    </div>
+                    <span style="font-weight: 600;">64%</span>
+                </div>
+                <div class="behavior-metric">
+                    <span>User Engagement</span>
+                    <div class="behavior-bar">
+                        <div class="behavior-fill" style="width: 71%"></div>
+                    </div>
+                    <span style="font-weight: 600;">71%</span>
+                </div>
+                <div class="behavior-metric">
+                    <span>Support Satisfaction</span>
+                    <div class="behavior-bar">
+                        <div class="behavior-fill" style="width: 89%"></div>
+                    </div>
+                    <span style="font-weight: 600;">89%</span>
+                </div>
+                <div class="behavior-metric">
+                    <span>Invoice Health</span>
+                    <div class="behavior-bar">
+                        <div class="behavior-fill" style="width: 94%"></div>
+                    </div>
+                    <span style="font-weight: 600;">94%</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Churn Risk Analysis -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Churn Risk Assessment<a href="#fn6" class="footnote-ref">⁶</a>
+            </h2>
+            <table class="churn-risk-table">
+                <thead>
+                    <tr>
+                        <th>Customer Segment</th>
+                        <th>At Risk</th>
+                        <th>ARR at Risk</th>
+                        <th>Risk Score</th>
+                        <th>Primary Risk Factor</th>
+                        <th>Intervention Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Enterprise - Tech</strong></td>
+                        <td>12 accounts</td>
+                        <td>$487K</td>
+                        <td><span class="risk-indicator risk-high">HIGH</span></td>
+                        <td>Low product adoption (32%)</td>
+                        <td>Executive review scheduled</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Enterprise - Finance</strong></td>
+                        <td>5 accounts</td>
+                        <td>$213K</td>
+                        <td><span class="risk-indicator risk-medium">MEDIUM</span></td>
+                        <td>Contract negotiation delays</td>
+                        <td>Pricing discussion ongoing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mid-Market - Retail</strong></td>
+                        <td>23 accounts</td>
+                        <td>$156K</td>
+                        <td><span class="risk-indicator risk-high">HIGH</span></td>
+                        <td>Support ticket volume (↑142%)</td>
+                        <td>Dedicated CSM assigned</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mid-Market - Healthcare</strong></td>
+                        <td>8 accounts</td>
+                        <td>$89K</td>
+                        <td><span class="risk-indicator risk-low">LOW</span></td>
+                        <td>Seasonal usage pattern</td>
+                        <td>Monitoring only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>SMB - Various</strong></td>
+                        <td>67 accounts</td>
+                        <td>$124K</td>
+                        <td><span class="risk-indicator risk-medium">MEDIUM</span></td>
+                        <td>Payment failures (18%)</td>
+                        <td>Automated outreach active</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="insight-callout">
+                <strong>Critical Insight:</strong> Enterprise Tech segment represents 45% of at-risk ARR despite being only 
+                9% of at-risk accounts. Immediate intervention with product adoption workshops and executive alignment 
+                sessions recommended. Historical save rate for similar interventions: 73%.
+            </div>
+        </section>
+        
+        <!-- Expansion Opportunity Matrix -->
+        <section class="expansion-matrix">
+            <h2 style="color: #003A70; margin-bottom: 1.5rem;">Revenue Expansion Opportunities<a href="#fn7" class="footnote-ref">⁷</a></h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h3 style="color: #00A650;">High Potential Accounts</h3>
+                    <canvas id="expansion-scatter" height="300"></canvas>
+                </div>
+                <div>
+                    <h3 style="color: #00A650;">Expansion Revenue Forecast</h3>
+                    <table style="width: 100%; font-size: 0.875rem;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 0.75rem; text-align: left;">Opportunity Type</th>
+                                <th style="padding: 0.75rem; text-align: right;">Accounts</th>
+                                <th style="padding: 0.75rem; text-align: right;">Potential ARR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 0.75rem;">Seat Expansion</td>
+                                <td style="padding: 0.75rem; text-align: right;">89</td>
+                                <td style="padding: 0.75rem; text-align: right; font-weight: 600;">$342K</td>
+                            </tr>
+                            <tr style="background: #f8f9fa;">
+                                <td style="padding: 0.75rem;">Feature Upsell</td>
+                                <td style="padding: 0.75rem; text-align: right;">156</td>
+                                <td style="padding: 0.75rem; text-align: right; font-weight: 600;">$278K</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem;">Tier Upgrade</td>
+                                <td style="padding: 0.75rem; text-align: right;">43</td>
+                                <td style="padding: 0.75rem; text-align: right; font-weight: 600;">$189K</td>
+                            </tr>
+                            <tr style="background: #f8f9fa;">
+                                <td style="padding: 0.75rem;">Multi-year Contract</td>
+                                <td style="padding: 0.75rem; text-align: right;">67</td>
+                                <td style="padding: 0.75rem; text-align: right; font-weight: 600;">$156K</td>
+                            </tr>
+                            <tr style="background: #003A70; color: white;">
+                                <td style="padding: 0.75rem; font-weight: 600;">Total Opportunity</td>
+                                <td style="padding: 0.75rem; text-align: right; font-weight: 600;">355</td>
+                                <td style="padding: 0.75rem; text-align: right; font-weight: 600;">$965K</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Strategic Recommendations -->
+        <div class="recommendation-box">
+            <h3 style="color: white; margin-bottom: 1rem;">Customer Success Strategic Initiatives</h3>
+            <div class="recommendation-grid">
+                <div>
+                    <h4 style="color: #FFD100;">Retention Priorities</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 1.8;">
+                        <li>Launch "Enterprise Success Program" for at-risk accounts</li>
+                        <li>Implement predictive churn scoring model</li>
+                        <li>Create customer health dashboard for CSMs</li>
+                        <li>Establish quarterly business reviews for top 20%</li>
+                    </ol>
+                </div>
+                <div>
+                    <h4 style="color: #FFD100;">Growth Initiatives</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 1.8;">
+                        <li>Deploy in-app expansion prompts based on usage</li>
+                        <li>Create vertical-specific value propositions</li>
+                        <li>Launch customer advocacy program</li>
+                        <li>Implement usage-based pricing pilot</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lifetime Value Analysis -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Customer Lifetime Value Trends
+            </h2>
+            <canvas id="ltv-cohort-chart" height="300"></canvas>
+        </section>
+        
+        <!-- Footnotes -->
+        <div class="footnotes">
+            <h3 style="font-size: 0.875rem; color: #003A70; margin-bottom: 1rem;">Data Sources & Methodology</h3>
+            <p>
+                <span id="fn1">¹</span> <strong>Enterprise Segment:</strong> Companies with >500 employees or >$50M annual revenue. 
+                Classification based on Dun & Bradstreet firmographic data, validated quarterly. Source: CRM enrichment via 
+                Clearbit and manual verification for accounts >$100K ARR.
+            </p>
+            <p>
+                <span id="fn2">²</span> <strong>Mid-Market Segment:</strong> Companies with 50-500 employees or $5M-$50M annual revenue. 
+                Segmentation reviewed bi-annually to account for customer growth. Migration between segments tracked monthly.
+            </p>
+            <p>
+                <span id="fn3">³</span> <strong>SMB Segment:</strong> Companies with <50 employees or <$5M annual revenue. 
+                Includes self-service and low-touch customer success model. Automated engagement scoring applied.
+            </p>
+            <p>
+                <span id="fn4">⁴</span> <strong>Net Promoter Score:</strong> Based on quarterly survey sent to primary contacts. 
+                Q4 2024 survey: n=847 responses, 68% response rate. Standard NPS methodology: "How likely are you to recommend 
+                our solution to a colleague?" Scale 0-10. Industry benchmark from SaaS Benchmarks Report 2024.
+            </p>
+            <p>
+                <span id="fn5">⁵</span> <strong>Customer Health Score:</strong> Composite metric including: product adoption (25%), 
+                feature utilization (20%), support interactions (15%), invoice health (15%), user engagement (15%), and executive 
+                engagement (10%). Scores normalized 0-100. Predictive of churn with 84% accuracy at 90-day horizon.
+            </p>
+            <p>
+                <span id="fn6">⁶</span> <strong>Churn Risk Assessment:</strong> Machine learning model trained on 36 months historical data. 
+                Features include: usage patterns, support tickets, payment history, engagement metrics, and contract terms. 
+                Risk scores: High (>70% churn probability), Medium (30-70%), Low (<30%). Model retrained monthly.
+            </p>
+            <p>
+                <span id="fn7">⁷</span> <strong>Expansion Opportunities:</strong> Identified through usage analysis and propensity modeling. 
+                Seat expansion: >80% license utilization. Feature upsell: High usage of adjacent features. Tier upgrade: 
+                Approaching plan limits. Historical conversion rates applied to calculate potential ARR.
+            </p>
+            <p style="margin-top: 1rem; font-style: italic;">
+                <strong>Data Freshness:</strong> Customer data synchronized hourly from production systems. Health scores and 
+                risk assessments updated daily. NPS and satisfaction metrics updated after each survey cycle. All financial 
+                metrics reconciled with billing system nightly.
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Health Score Distribution
+        const healthCtx = document.getElementById('health-distribution').getContext('2d');
+        new Chart(healthCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Healthy (80-100)', 'Stable (60-79)', 'At Risk (40-59)', 'Critical (0-39)'],
+                datasets: [{
+                    data: [567, 423, 189, 68],
+                    backgroundColor: ['#00A650', '#FFD100', '#FF6900', '#E30613'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Expansion Opportunity Scatter
+        const expansionCtx = document.getElementById('expansion-scatter').getContext('2d');
+        new Chart(expansionCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'High Value Targets',
+                    data: [
+                        {x: 92, y: 145}, {x: 87, y: 134}, {x: 94, y: 128},
+                        {x: 89, y: 98}, {x: 91, y: 87}
+                    ],
+                    backgroundColor: '#00A650',
+                    pointRadius: 12
+                }, {
+                    label: 'Medium Priority',
+                    data: [
+                        {x: 72, y: 67}, {x: 68, y: 54}, {x: 74, y: 48},
+                        {x: 71, y: 42}, {x: 69, y: 38}, {x: 73, y: 35},
+                        {x: 70, y: 31}, {x: 67, y: 28}
+                    ],
+                    backgroundColor: '#FFD100',
+                    pointRadius: 10
+                }, {
+                    label: 'Future Opportunities',
+                    data: [
+                        {x: 45, y: 23}, {x: 52, y: 19}, {x: 48, y: 17},
+                        {x: 43, y: 15}, {x: 51, y: 12}, {x: 46, y: 10}
+                    ],
+                    backgroundColor: '#003A70',
+                    pointRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Health Score',
+                            font: { weight: 'bold' }
+                        },
+                        min: 40,
+                        max: 100
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Expansion Potential ($K)',
+                            font: { weight: 'bold' }
+                        },
+                        min: 0,
+                        max: 160
+                    }
+                }
+            }
+        });
+        
+        // LTV Cohort Analysis
+        const ltvCtx = document.getElementById('ltv-cohort-chart').getContext('2d');
+        new Chart(ltvCtx, {
+            type: 'line',
+            data: {
+                labels: ['Month 0', 'Month 6', 'Month 12', 'Month 18', 'Month 24', 'Month 30', 'Month 36'],
+                datasets: [{
+                    label: 'Enterprise Cohort',
+                    data: [0, 45, 89, 134, 178, 223, 267],
+                    borderColor: '#003A70',
+                    backgroundColor: 'rgba(0, 58, 112, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }, {
+                    label: 'Mid-Market Cohort',
+                    data: [0, 32, 58, 84, 108, 131, 152],
+                    borderColor: '#00A650',
+                    backgroundColor: 'rgba(0, 166, 80, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }, {
+                    label: 'SMB Cohort',
+                    data: [0, 18, 31, 42, 51, 58, 64],
+                    borderColor: '#FF6900',
+                    backgroundColor: 'rgba(255, 105, 0, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Customer Lifetime Value by Segment (in $000s)',
+                        font: { size: 16, weight: 'bold' },
+                        color: '#003A70'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Cumulative LTV ($K)'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

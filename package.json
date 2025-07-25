@@ -1,0 +1,27 @@
+{
+  "name": "ceo-dashboard-demo",
+  "version": "1.0.0",
+  "description": "Professional CEO Dashboard mockups with Tufte-inspired design",
+  "main": "index.html",
+  "scripts": {
+    "screenshot": "node screenshots/capture.js",
+    "screenshot:all": "node screenshots/capture.js --all",
+    "install": "npm install"
+  },
+  "keywords": [
+    "dashboard",
+    "business-intelligence",
+    "tufte",
+    "data-visualization",
+    "ceo",
+    "mockup"
+  ],
+  "author": "Brigham Hall",
+  "license": "MIT",
+  "devDependencies": {
+    "puppeteer": "^21.6.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

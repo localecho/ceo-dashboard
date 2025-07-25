@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Operations Dashboard - Sales Performance Analytics</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* BCG-style professional design */
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+        
+        .bcg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 2rem;
+            border-bottom: 3px solid #003A70;
+            margin-bottom: 2rem;
+        }
+        
+        .bcg-logo {
+            font-weight: 700;
+            color: #003A70;
+            font-size: 1.5rem;
+        }
+        
+        .revenue-metrics {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-box {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-left: 4px solid #003A70;
+            border-radius: 4px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .pipeline-waterfall {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        
+        .sales-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.875rem;
+        }
+        
+        .sales-table th {
+            background: #003A70;
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .sales-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .cohort-analysis {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .heatmap-cell {
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .footnote-ref {
+            vertical-align: super;
+            font-size: 0.7rem;
+            color: #003A70;
+            font-weight: 600;
+        }
+        
+        .insight-callout {
+            background: #FFF4E6;
+            border-left: 4px solid #FF6900;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .performance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .rep-performance {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 4px;
+        }
+        
+        .footnotes {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .velocity-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .velocity-fast { background: #00A650; }
+        .velocity-normal { background: #FFD100; }
+        .velocity-slow { background: #E30613; }
+    </style>
+</head>
+<body>
+    <div class="tufte-container">
+        <!-- BCG-style Header -->
+        <div class="bcg-header">
+            <div>
+                <div class="bcg-logo">BCG</div>
+                <h1 style="margin-top: 1rem; font-size: 2rem; color: #003A70;">
+                    Revenue Operations Dashboard
+                </h1>
+                <p style="color: #666; margin-top: 0.5rem;">
+                    Sales Performance & Pipeline Analytics
+                </p>
+            </div>
+            <div class="report-meta">
+                <strong>Department:</strong> Revenue Operations<br>
+                <strong>Period:</strong> Q4 2024 - Week 47<br>
+                <strong>Last Updated:</strong> Nov 25, 2024 06:00 UTC<br>
+                <strong>Next Review:</strong> Dec 2, 2024
+            </div>
+        </div>
+        
+        <!-- Key Revenue Metrics -->
+        <section>
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Revenue Performance Indicators
+            </h2>
+            <div class="revenue-metrics">
+                <div class="metric-box">
+                    <div class="metric-label">Total Pipeline<a href="#fn1" class="footnote-ref">¹</a></div>
+                    <div class="metric-value">$2.4M</div>
+                    <div style="color: #00A650; font-weight: 600;">↑ 18% MoM</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Qualified Pipeline<a href="#fn2" class="footnote-ref">²</a></div>
+                    <div class="metric-value">$1.8M</div>
+                    <div style="color: #666;">3.7× coverage</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Win Rate<a href="#fn3" class="footnote-ref">³</a></div>
+                    <div class="metric-value">24.1%</div>
+                    <div style="color: #E30613; font-weight: 600;">↓ 1.8pp</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">ACV<a href="#fn4" class="footnote-ref">⁴</a></div>
+                    <div class="metric-value">$32K</div>
+                    <div style="color: #00A650; font-weight: 600;">↑ $2.3K</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Sales Cycle<a href="#fn5" class="footnote-ref">⁵</a></div>
+                    <div class="metric-value">47 days</div>
+                    <div style="color: #00A650; font-weight: 600;">↓ 3 days</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Pipeline Waterfall Analysis -->
+        <section class="pipeline-waterfall">
+            <h2 style="color: #003A70; margin-bottom: 1.5rem;">Q4 Pipeline Progression Analysis</h2>
+            <div id="waterfall-chart" style="height: 400px;"></div>
+            <div class="insight-callout">
+                <strong>Key Insight:</strong> Pipeline creation velocity has increased 23% month-over-month, 
+                but conversion from SQL to Opportunity has declined by 8pp. Analysis indicates pricing 
+                objections in 42% of stalled deals, suggesting need for ROI documentation improvement.
+            </div>
+        </section>
+        
+        <!-- Sales Team Performance -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Sales Team Performance Matrix
+            </h2>
+            <table class="sales-table">
+                <thead>
+                    <tr>
+                        <th>Sales Rep</th>
+                        <th>Pipeline ($)</th>
+                        <th>Quota Attainment</th>
+                        <th>Win Rate</th>
+                        <th>Avg. Deal Size</th>
+                        <th>Sales Velocity</th>
+                        <th>Activity Score<a href="#fn6" class="footnote-ref">⁶</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Sarah Chen</strong></td>
+                        <td>$487K</td>
+                        <td style="color: #00A650; font-weight: 600;">118%</td>
+                        <td>28.3%</td>
+                        <td>$38.5K</td>
+                        <td><span class="velocity-indicator velocity-fast"></span>42 days</td>
+                        <td>94/100</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Michael Rodriguez</strong></td>
+                        <td>$423K</td>
+                        <td style="color: #00A650; font-weight: 600;">104%</td>
+                        <td>26.1%</td>
+                        <td>$31.2K</td>
+                        <td><span class="velocity-indicator velocity-normal"></span>48 days</td>
+                        <td>87/100</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Jennifer Park</strong></td>
+                        <td>$392K</td>
+                        <td style="color: #FFD100; font-weight: 600;">92%</td>
+                        <td>22.7%</td>
+                        <td>$29.8K</td>
+                        <td><span class="velocity-indicator velocity-normal"></span>51 days</td>
+                        <td>91/100</td>
+                    </tr>
+                    <tr>
+                        <td><strong>David Thompson</strong></td>
+                        <td>$367K</td>
+                        <td style="color: #FFD100; font-weight: 600;">88%</td>
+                        <td>21.9%</td>
+                        <td>$27.4K</td>
+                        <td><span class="velocity-indicator velocity-slow"></span>56 days</td>
+                        <td>76/100</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lisa Martinez</strong></td>
+                        <td>$341K</td>
+                        <td style="color: #E30613; font-weight: 600;">78%</td>
+                        <td>19.2%</td>
+                        <td>$25.1K</td>
+                        <td><span class="velocity-indicator velocity-slow"></span>62 days</td>
+                        <td>82/100</td>
+                    </tr>
+                    <tr style="background: #f8f9fa; font-weight: 600;">
+                        <td>Team Average</td>
+                        <td>$402K</td>
+                        <td>96%</td>
+                        <td>23.6%</td>
+                        <td>$30.4K</td>
+                        <td>51 days</td>
+                        <td>86/100</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Deal Velocity & Conversion Analysis -->
+        <div class="performance-grid">
+            <div>
+                <h3 style="color: #003A70;">Stage Conversion Funnel</h3>
+                <canvas id="conversion-funnel" height="300"></canvas>
+            </div>
+            <div>
+                <h3 style="color: #003A70;">Deal Velocity by Stage</h3>
+                <canvas id="velocity-chart" height="300"></canvas>
+            </div>
+        </div>
+        
+        <!-- Cohort Revenue Retention -->
+        <section class="cohort-analysis">
+            <h2 style="color: #003A70; margin-bottom: 1.5rem;">Monthly Cohort Revenue Retention Analysis<a href="#fn7" class="footnote-ref">⁷</a></h2>
+            <table class="sales-table">
+                <thead>
+                    <tr>
+                        <th>Cohort</th>
+                        <th>Month 0</th>
+                        <th>Month 1</th>
+                        <th>Month 2</th>
+                        <th>Month 3</th>
+                        <th>Month 4</th>
+                        <th>Month 5</th>
+                        <th>Month 6</th>
+                        <th>Month 12</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Jan 2024</strong></td>
+                        <td class="heatmap-cell" style="background: #003A70; color: white;">$156K</td>
+                        <td class="heatmap-cell" style="background: #4d7ba7;">98%</td>
+                        <td class="heatmap-cell" style="background: #5983ae;">97%</td>
+                        <td class="heatmap-cell" style="background: #668bb5;">96%</td>
+                        <td class="heatmap-cell" style="background: #7393bc;">94%</td>
+                        <td class="heatmap-cell" style="background: #7393bc;">94%</td>
+                        <td class="heatmap-cell" style="background: #809bc3;">93%</td>
+                        <td class="heatmap-cell" style="background: #8ca3ca;">91%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Feb 2024</strong></td>
+                        <td class="heatmap-cell" style="background: #003A70; color: white;">$148K</td>
+                        <td class="heatmap-cell" style="background: #4073a0;">99%</td>
+                        <td class="heatmap-cell" style="background: #4d7ba7;">98%</td>
+                        <td class="heatmap-cell" style="background: #5983ae;">97%</td>
+                        <td class="heatmap-cell" style="background: #668bb5;">96%</td>
+                        <td class="heatmap-cell" style="background: #7393bc;">95%</td>
+                        <td class="heatmap-cell" style="background: #7393bc;">94%</td>
+                        <td class="heatmap-cell" style="background: #809bc3;">92%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mar 2024</strong></td>
+                        <td class="heatmap-cell" style="background: #003A70; color: white;">$163K</td>
+                        <td class="heatmap-cell" style="background: #4073a0;">99%</td>
+                        <td class="heatmap-cell" style="background: #4d7ba7;">98%</td>
+                        <td class="heatmap-cell" style="background: #5983ae;">97%</td>
+                        <td class="heatmap-cell" style="background: #5983ae;">97%</td>
+                        <td class="heatmap-cell" style="background: #668bb5;">96%</td>
+                        <td class="heatmap-cell" style="background: #7393bc;">95%</td>
+                        <td class="heatmap-cell" style="background: #7393bc;">94%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Apr 2024</strong></td>
+                        <td class="heatmap-cell" style="background: #003A70; color: white;">$171K</td>
+                        <td class="heatmap-cell" style="background: #336699;">100%</td>
+                        <td class="heatmap-cell" style="background: #4073a0;">99%</td>
+                        <td class="heatmap-cell" style="background: #4d7ba7;">98%</td>
+                        <td class="heatmap-cell" style="background: #4d7ba7;">98%</td>
+                        <td class="heatmap-cell" style="background: #5983ae;">97%</td>
+                        <td class="heatmap-cell" style="background: #668bb5;">96%</td>
+                        <td style="background: #e0e0e0;">-</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="margin-top: 1rem; font-size: 0.875rem; color: #666;">
+                <strong>Net Revenue Retention:</strong> 116% (including expansion revenue)<br>
+                <strong>Gross Revenue Retention:</strong> 94% at 12 months
+            </div>
+        </section>
+        
+        <!-- Win/Loss Analysis -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Win/Loss Analysis - Q4 2024
+            </h2>
+            <div class="performance-grid">
+                <div class="rep-performance">
+                    <h3 style="color: #00A650; margin-bottom: 1rem;">Win Factors (n=72)</h3>
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong>Product-Market Fit</strong>
+                        <div style="background: #e0e0e0; height: 20px; margin-top: 0.25rem;">
+                            <div style="background: #00A650; height: 100%; width: 31%;"></div>
+                        </div>
+                        <span style="font-size: 0.875rem;">31% of wins</span>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong>Implementation Speed</strong>
+                        <div style="background: #e0e0e0; height: 20px; margin-top: 0.25rem;">
+                            <div style="background: #00A650; height: 100%; width: 24%;"></div>
+                        </div>
+                        <span style="font-size: 0.875rem;">24% of wins</span>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong>Price Value</strong>
+                        <div style="background: #e0e0e0; height: 20px; margin-top: 0.25rem;">
+                            <div style="background: #00A650; height: 100%; width: 22%;"></div>
+                        </div>
+                        <span style="font-size: 0.875rem;">22% of wins</span>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong>Customer Success</strong>
+                        <div style="background: #e0e0e0; height: 20px; margin-top: 0.25rem;">
+                            <div style="background: #00A650; height: 100%; width: 15%;"></div>
+                        </div>
+                        <span style="font-size: 0.875rem;">15% of wins</span>
+                    </div>
+                </div>
+                <div class="rep-performance">
+                    <h3 style="color: #E30613; margin-bottom: 1rem;">Loss Factors (n=226)</h3>
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong>Price Too High</strong>
+                        <div style="background: #e0e0e0; height: 20px; margin-top: 0.25rem;">
+                            <div style="background: #E30613; height: 100%; width: 28%;"></div>
+                        </div>
+                        <span style="font-size: 0.875rem;">28% of losses</span>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong>Missing Features</strong>
+                        <div style="background: #e0e0e0; height: 20px; margin-top: 0.25rem;">
+                            <div style="background: #E30613; height: 100%; width: 22%;"></div>
+                        </div>
+                        <span style="font-size: 0.875rem;">22% of losses</span>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong>Competitor Won</strong>
+                        <div style="background: #e0e0e0; height: 20px; margin-top: 0.25rem;">
+                            <div style="background: #E30613; height: 100%; width: 19%;"></div>
+                        </div>
+                        <span style="font-size: 0.875rem;">19% of losses</span>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong>No Decision</strong>
+                        <div style="background: #e0e0e0; height: 20px; margin-top: 0.25rem;">
+                            <div style="background: #E30613; height: 100%; width: 17%;"></div>
+                        </div>
+                        <span style="font-size: 0.875rem;">17% of losses</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Strategic Recommendations -->
+        <div style="background: #003A70; color: white; padding: 2rem; margin: 2rem 0; border-radius: 4px;">
+            <h3 style="color: white; margin-bottom: 1rem;">Revenue Operations Strategic Recommendations</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h4 style="color: #FFD100;">Immediate Actions</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 1.8;">
+                        <li>Implement tiered pricing model to address price objections</li>
+                        <li>Develop ROI calculator for sales team usage</li>
+                        <li>Focus training on mid-funnel conversion (SQL→Opp)</li>
+                        <li>Launch "fast-track" implementation program</li>
+                    </ol>
+                </div>
+                <div>
+                    <h4 style="color: #FFD100;">90-Day Initiatives</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 1.8;">
+                        <li>Deploy sales enablement platform for consistency</li>
+                        <li>Establish competitive intelligence program</li>
+                        <li>Create industry-specific value propositions</li>
+                        <li>Implement account-based selling for Enterprise</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footnotes -->
+        <div class="footnotes">
+            <h3 style="font-size: 0.875rem; color: #003A70; margin-bottom: 1rem;">Data Sources & Methodology</h3>
+            <p>
+                <span id="fn1">¹</span> <strong>Total Pipeline:</strong> Sum of all open opportunities in CRM with close dates within next 180 days. 
+                Includes all stages from Qualification through Negotiation. Source: Salesforce CRM, refreshed hourly. Last sync: Nov 25, 2024 05:47 UTC.
+            </p>
+            <p>
+                <span id="fn2">²</span> <strong>Qualified Pipeline:</strong> Opportunities in stages 3-5 (Discovery through Negotiation) with completed 
+                BANT qualification and engagement score >70. Coverage ratio = Qualified Pipeline ÷ Quarterly Target.
+            </p>
+            <p>
+                <span id="fn3">³</span> <strong>Win Rate:</strong> Closed Won ÷ (Closed Won + Closed Lost) for opportunities closed in trailing 90 days. 
+                Excludes deals marked as "Duplicate" or "Canceled." Industry benchmark: 28% (Salesforce State of Sales Report 2024).
+            </p>
+            <p>
+                <span id="fn4">⁴</span> <strong>Annual Contract Value (ACV):</strong> Average first-year value of closed-won deals in current quarter. 
+                Includes recurring revenue only; excludes one-time implementation fees and professional services.
+            </p>
+            <p>
+                <span id="fn5">⁵</span> <strong>Sales Cycle:</strong> Average days from Opportunity Creation to Closed Won for deals closed in last 90 days. 
+                Measured in calendar days. Benchmark: B2B SaaS average is 84 days (HubSpot Sales Statistics 2024).
+            </p>
+            <p>
+                <span id="fn6">⁶</span> <strong>Activity Score:</strong> Composite metric based on: calls made (30%), emails sent (20%), meetings held (30%), 
+                pipeline created (20%). Normalized to 100-point scale. Minimum threshold: 70 points.
+            </p>
+            <p>
+                <span id="fn7">⁷</span> <strong>Cohort Analysis:</strong> Monthly cohorts based on customer contract start date. Revenue retention 
+                calculated as MRR at month X ÷ MRR at month 0. Includes expansion/contraction but excludes churned accounts. 
+                Net retention includes expansion revenue; gross retention excludes it.
+            </p>
+            <p style="margin-top: 1rem; font-style: italic;">
+                <strong>Data Quality Note:</strong> All pipeline data validated through weekly sales forecast calls. Conversion rates based on 
+                12-month rolling average to account for seasonality. Statistical significance tested at 95% confidence level.
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Conversion Funnel Chart
+        const funnelCtx = document.getElementById('conversion-funnel').getContext('2d');
+        new Chart(funnelCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Leads', 'MQLs', 'SQLs', 'Opportunities', 'Closed Won'],
+                datasets: [{
+                    label: 'Count',
+                    data: [2847, 973, 659, 298, 72],
+                    backgroundColor: '#003A70',
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Funnel Volume by Stage',
+                        font: { size: 14 }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { display: false }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+        
+        // Velocity Chart
+        const velocityCtx = document.getElementById('velocity-chart').getContext('2d');
+        new Chart(velocityCtx, {
+            type: 'line',
+            data: {
+                labels: ['Lead→MQL', 'MQL→SQL', 'SQL→Opp', 'Opp→Close'],
+                datasets: [{
+                    label: 'Days in Stage',
+                    data: [5, 8, 12, 22],
+                    borderColor: '#003A70',
+                    backgroundColor: 'rgba(0, 58, 112, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Average Days by Stage',
+                        font: { size: 14 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Days'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Waterfall Chart using D3
+        const waterfallData = [
+            { name: 'Starting Pipeline', value: 2100000, class: 'positive', cumulative: 2100000 },
+            { name: 'New Opportunities', value: 450000, class: 'positive', cumulative: 2550000 },
+            { name: 'Upward Revisions', value: 125000, class: 'positive', cumulative: 2675000 },
+            { name: 'Closed Won', value: -287000, class: 'negative', cumulative: 2388000 },
+            { name: 'Closed Lost', value: -412000, class: 'negative', cumulative: 1976000 },
+            { name: 'Pushed to Q1', value: -176000, class: 'negative', cumulative: 1800000 },
+            { name: 'Q4 Ending Pipeline', value: 1800000, class: 'total', cumulative: 1800000 }
+        ];
+        
+        const margin = { top: 20, right: 30, bottom: 60, left: 80 };
+        const width = 800 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+        
+        const svg = d3.select('#waterfall-chart')
+            .append('svg')
+            .attr('width', width + margin.left + margin.right)
+            .attr('height', height + margin.top + margin.bottom)
+            .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+        
+        const x = d3.scaleBand()
+            .range([0, width])
+            .padding(0.3)
+            .domain(waterfallData.map(d => d.name));
+        
+        const y = d3.scaleLinear()
+            .range([height, 0])
+            .domain([0, d3.max(waterfallData, d => d.cumulative) * 1.1]);
+        
+        // Add bars
+        svg.selectAll('.bar')
+            .data(waterfallData)
+            .enter().append('rect')
+            .attr('class', d => `bar ${d.class}`)
+            .attr('x', d => x(d.name))
+            .attr('width', x.bandwidth())
+            .attr('y', d => d.class === 'negative' ? y(d.cumulative + Math.abs(d.value)) : y(d.cumulative))
+            .attr('height', d => d.class === 'total' ? height - y(d.value) : height - y(Math.abs(d.value)))
+            .attr('fill', d => d.class === 'positive' ? '#00A650' : d.class === 'negative' ? '#E30613' : '#003A70');
+        
+        // Add axes
+        svg.append('g')
+            .attr('transform', `translate(0,${height})`)
+            .call(d3.axisBottom(x))
+            .selectAll('text')
+            .attr('transform', 'rotate(-45)')
+            .style('text-anchor', 'end');
+        
+        svg.append('g')
+            .call(d3.axisLeft(y).tickFormat(d => '$' + (d / 1000000).toFixed(1) + 'M'));
+    </script>
+</body>
+</html>

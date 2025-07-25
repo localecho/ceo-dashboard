@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operational Excellence Dashboard - Efficiency & Performance Metrics</title>
+    <link rel="stylesheet" href="assets/tufte.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* BCG-style professional design */
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+        
+        .bcg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 2rem;
+            border-bottom: 3px solid #003A70;
+            margin-bottom: 2rem;
+        }
+        
+        .bcg-logo {
+            font-weight: 700;
+            color: #003A70;
+            font-size: 1.5rem;
+        }
+        
+        .operational-metrics {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-tile {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 1.25rem;
+            border-radius: 4px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .metric-tile.critical {
+            border-color: #E30613;
+            background: #FFF5F5;
+        }
+        
+        .metric-tile.warning {
+            border-color: #FF6900;
+            background: #FFF9F0;
+        }
+        
+        .metric-tile.healthy {
+            border-color: #00A650;
+            background: #F5FFF5;
+        }
+        
+        .metric-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-label {
+            font-size: 0.7rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .sla-dashboard {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 2rem 0;
+        }
+        
+        .sla-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .sla-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .sla-score {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sla-target {
+            font-size: 0.875rem;
+            color: #666;
+        }
+        
+        .process-efficiency {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        
+        .efficiency-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.875rem;
+        }
+        
+        .efficiency-table th {
+            background: #003A70;
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .efficiency-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .efficiency-bar {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            width: 150px;
+            display: inline-block;
+        }
+        
+        .efficiency-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #003A70, #00A650);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.5rem;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .team-performance {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+        
+        .performance-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .team-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .team-name {
+            font-weight: 700;
+            color: #003A70;
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+        }
+        
+        .team-metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.875rem;
+        }
+        
+        .automation-progress {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        
+        .automation-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .automation-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-live { background: #E8F5E9; color: #00A650; }
+        .status-testing { background: #FFF8E1; color: #F57C00; }
+        .status-development { background: #E3F2FD; color: #003A70; }
+        .status-planned { background: #F5F5F5; color: #666; }
+        
+        .incident-tracker {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+        
+        .severity-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .sev-1 { background: #E30613; }
+        .sev-2 { background: #FF6900; }
+        .sev-3 { background: #FFD100; }
+        .sev-4 { background: #666; }
+        
+        .footnote-ref {
+            vertical-align: super;
+            font-size: 0.7rem;
+            color: #003A70;
+            font-weight: 600;
+        }
+        
+        .insight-callout {
+            background: #FFF4E6;
+            border-left: 4px solid #FF6900;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .footnotes {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .recommendation-box {
+            background: #003A70;
+            color: white;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .cost-savings {
+            background: #E8F5E9;
+            border: 2px solid #00A650;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="tufte-container">
+        <!-- BCG-style Header -->
+        <div class="bcg-header">
+            <div>
+                <div class="bcg-logo">BCG</div>
+                <h1 style="margin-top: 1rem; font-size: 2rem; color: #003A70;">
+                    Operational Excellence Dashboard
+                </h1>
+                <p style="color: #666; margin-top: 0.5rem;">
+                    System Performance, Team Efficiency & Process Optimization
+                </p>
+            </div>
+            <div class="report-meta">
+                <strong>Department:</strong> Operations & IT<br>
+                <strong>Period:</strong> Q4 2024 - Week 47<br>
+                <strong>Last Updated:</strong> Nov 25, 2024 06:00 UTC<br>
+                <strong>System Status:</strong> Operational
+            </div>
+        </div>
+        
+        <!-- Real-time Operational Metrics -->
+        <section>
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Real-time Operational Health<a href="#fn1" class="footnote-ref">¹</a>
+            </h2>
+            <div class="operational-metrics">
+                <div class="metric-tile healthy">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-label">System Uptime</div>
+                    <div class="metric-value">99.98%</div>
+                    <div style="font-size: 0.75rem; color: #00A650;">↑ 0.02pp</div>
+                </div>
+                <div class="metric-tile healthy">
+                    <div class="metric-icon">⏱️</div>
+                    <div class="metric-label">API Response Time</div>
+                    <div class="metric-value">127ms</div>
+                    <div style="font-size: 0.75rem; color: #00A650;">↓ 23ms</div>
+                </div>
+                <div class="metric-tile warning">
+                    <div class="metric-icon">💾</div>
+                    <div class="metric-label">Infrastructure Cost</div>
+                    <div class="metric-value">$87K</div>
+                    <div style="font-size: 0.75rem; color: #FF6900;">↑ 8%</div>
+                </div>
+                <div class="metric-tile healthy">
+                    <div class="metric-icon">🔄</div>
+                    <div class="metric-label">Deploy Frequency</div>
+                    <div class="metric-value">4.2/day</div>
+                    <div style="font-size: 0.75rem; color: #00A650;">↑ 15%</div>
+                </div>
+                <div class="metric-tile healthy">
+                    <div class="metric-icon">🐛</div>
+                    <div class="metric-label">Bug Escape Rate</div>
+                    <div class="metric-value">2.3%</div>
+                    <div style="font-size: 0.75rem; color: #00A650;">↓ 0.7pp</div>
+                </div>
+                <div class="metric-tile critical">
+                    <div class="metric-icon">📞</div>
+                    <div class="metric-label">Support Backlog</div>
+                    <div class="metric-value">147</div>
+                    <div style="font-size: 0.75rem; color: #E30613;">↑ 23%</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- SLA Performance Dashboard -->
+        <section class="sla-dashboard">
+            <h2 style="color: #003A70; margin-bottom: 1rem;">Service Level Agreement Performance<a href="#fn2" class="footnote-ref">²</a></h2>
+            <div class="sla-grid">
+                <div class="sla-card">
+                    <div class="sla-score" style="color: #00A650;">99.98%</div>
+                    <div class="sla-target">Uptime SLA</div>
+                    <div style="color: #666; font-size: 0.75rem;">Target: 99.9%</div>
+                    <div style="margin-top: 0.5rem; color: #00A650; font-weight: 600;">✓ Exceeding</div>
+                </div>
+                <div class="sla-card">
+                    <div class="sla-score" style="color: #00A650;">96.7%</div>
+                    <div class="sla-target">First Response</div>
+                    <div style="color: #666; font-size: 0.75rem;">Target: 95% < 1hr</div>
+                    <div style="margin-top: 0.5rem; color: #00A650; font-weight: 600;">✓ Meeting</div>
+                </div>
+                <div class="sla-card">
+                    <div class="sla-score" style="color: #FF6900;">87.3%</div>
+                    <div class="sla-target">Resolution Time</div>
+                    <div style="color: #666; font-size: 0.75rem;">Target: 90% < 24hr</div>
+                    <div style="margin-top: 0.5rem; color: #FF6900; font-weight: 600;">⚠ Below Target</div>
+                </div>
+                <div class="sla-card">
+                    <div class="sla-score" style="color: #00A650;">4.8/5</div>
+                    <div class="sla-target">Customer Satisfaction</div>
+                    <div style="color: #666; font-size: 0.75rem;">Target: 4.5/5</div>
+                    <div style="margin-top: 0.5rem; color: #00A650; font-weight: 600;">✓ Exceeding</div>
+                </div>
+            </div>
+            <div class="insight-callout">
+                <strong>SLA Analysis:</strong> Resolution time SLA miss driven by complex integration issues (28% of breaches). 
+                Implementing automated diagnostics expected to improve resolution by 15%. Q1 target: achieve 92% compliance.
+            </div>
+        </section>
+        
+        <!-- Process Efficiency Analysis -->
+        <section class="process-efficiency">
+            <h2 style="color: #003A70; margin-bottom: 1rem;">Core Process Efficiency Analysis<a href="#fn3" class="footnote-ref">³</a></h2>
+            <table class="efficiency-table">
+                <thead>
+                    <tr>
+                        <th>Process</th>
+                        <th>Cycle Time</th>
+                        <th>Efficiency Score</th>
+                        <th>Automation %</th>
+                        <th>Cost/Transaction</th>
+                        <th>Quality Score</th>
+                        <th>Improvement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Customer Onboarding</strong></td>
+                        <td>1.9 days</td>
+                        <td>
+                            <div class="efficiency-bar">
+                                <div class="efficiency-fill" style="width: 87%;">87%</div>
+                            </div>
+                        </td>
+                        <td>73%</td>
+                        <td>$124</td>
+                        <td>94/100</td>
+                        <td style="color: #00A650; font-weight: 600;">↑ 12%</td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td><strong>Support Ticket Resolution</strong></td>
+                        <td>4.7 hours</td>
+                        <td>
+                            <div class="efficiency-bar">
+                                <div class="efficiency-fill" style="width: 68%;">68%</div>
+                            </div>
+                        </td>
+                        <td>45%</td>
+                        <td>$47</td>
+                        <td>87/100</td>
+                        <td style="color: #E30613; font-weight: 600;">↓ 3%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Invoice Processing</strong></td>
+                        <td>0.3 days</td>
+                        <td>
+                            <div class="efficiency-bar">
+                                <div class="efficiency-fill" style="width: 94%;">94%</div>
+                            </div>
+                        </td>
+                        <td>89%</td>
+                        <td>$8</td>
+                        <td>99/100</td>
+                        <td style="color: #00A650; font-weight: 600;">↑ 8%</td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td><strong>Feature Deployment</strong></td>
+                        <td>2.1 days</td>
+                        <td>
+                            <div class="efficiency-bar">
+                                <div class="efficiency-fill" style="width: 91%;">91%</div>
+                            </div>
+                        </td>
+                        <td>82%</td>
+                        <td>$1,847</td>
+                        <td>96/100</td>
+                        <td style="color: #00A650; font-weight: 600;">↑ 15%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data Processing Pipeline</strong></td>
+                        <td>14 min</td>
+                        <td>
+                            <div class="efficiency-bar">
+                                <div class="efficiency-fill" style="width: 97%;">97%</div>
+                            </div>
+                        </td>
+                        <td>95%</td>
+                        <td>$0.12</td>
+                        <td>99.7/100</td>
+                        <td style="color: #00A650; font-weight: 600;">↑ 4%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Team Performance Matrix -->
+        <section class="team-performance">
+            <h2 style="color: #003A70; margin-bottom: 1rem;">Team Performance & Productivity<a href="#fn4" class="footnote-ref">⁴</a></h2>
+            <div class="performance-matrix">
+                <div class="team-card">
+                    <div class="team-name">Engineering</div>
+                    <div class="team-metric">
+                        <span>Velocity</span>
+                        <span style="font-weight: 600;">127 pts/sprint</span>
+                    </div>
+                    <div class="team-metric">
+                        <span>Utilization</span>
+                        <span style="font-weight: 600; color: #00A650;">87%</span>
+                    </div>
+                    <div class="team-metric">
+                        <span>Quality Score</span>
+                        <span style="font-weight: 600;">94/100</span>
+                    </div>
+                    <div class="team-metric">
+                        <span>On-time Delivery</span>
+                        <span style="font-weight: 600; color: #00A650;">91%</span>
+                    </div>
+                </div>
+                <div class="team-card">
+                    <div class="team-name">Customer Success</div>
+                    <div class="team-metric">
+                        <span>Tickets/Agent</span>
+                        <span style="font-weight: 600;">47/week</span>
+                    </div>
+                    <div class="team-metric">
+                        <span>CSAT Score</span>
+                        <span style="font-weight: 600; color: #00A650;">4.8/5</span>
+                    </div>
+                    <div class="team-metric">
+                        <span>First Call Resolution</span>
+                        <span style="font-weight: 600;">73%</span>
+                    </div>
+                    <div class="team-metric">
+                        <span>Utilization</span>
+                        <span style="font-weight: 600; color: #FF6900;">94%</span>
+                    </div>
+                </div>
+                <div class="team-card">
+                    <div class="team-name">Operations</div>
+                    <div class="team-metric">
+                        <span>Process Efficiency</span>
+                        <span style="font-weight: 600;">89%</span>
+                    </div>
+                    <div class="team-metric">
+                        <span>Cost Reduction</span>
+                        <span style="font-weight: 600; color: #00A650;">-12%</span>
+                    </div>
+                    <div class="team-metric">
+                        <span>Automation Rate</span>
+                        <span style="font-weight: 600;">67%</span>
+                    </div>
+                    <div class="team-metric">
+                        <span>SLA Compliance</span>
+                        <span style="font-weight: 600; color: #00A650;">96%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Automation Progress Tracker -->
+        <section class="automation-progress">
+            <h2 style="color: #003A70; margin-bottom: 1rem;">Automation & Digital Transformation<a href="#fn5" class="footnote-ref">⁵</a></h2>
+            <div class="automation-item">
+                <div>
+                    <strong>Intelligent Ticket Routing</strong>
+                    <div style="color: #666; font-size: 0.875rem;">ML-based support ticket classification</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #003A70;">-47%</div>
+                    <div style="font-size: 0.75rem; color: #666;">Response Time</div>
+                </div>
+                <div>
+                    <span class="automation-status status-live">LIVE</span>
+                </div>
+            </div>
+            <div class="automation-item">
+                <div>
+                    <strong>Automated Invoice Processing</strong>
+                    <div style="color: #666; font-size: 0.875rem;">OCR + workflow automation</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #003A70;">$127K</div>
+                    <div style="font-size: 0.75rem; color: #666;">Annual Savings</div>
+                </div>
+                <div>
+                    <span class="automation-status status-live">LIVE</span>
+                </div>
+            </div>
+            <div class="automation-item">
+                <div>
+                    <strong>Predictive Scaling</strong>
+                    <div style="color: #666; font-size: 0.875rem;">AI-driven infrastructure optimization</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #003A70;">-23%</div>
+                    <div style="font-size: 0.75rem; color: #666;">Infrastructure Cost</div>
+                </div>
+                <div>
+                    <span class="automation-status status-testing">TESTING</span>
+                </div>
+            </div>
+            <div class="automation-item">
+                <div>
+                    <strong>Customer Health Monitoring</strong>
+                    <div style="color: #666; font-size: 0.875rem;">Real-time churn prediction system</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #003A70;">84%</div>
+                    <div style="font-size: 0.75rem; color: #666;">Prediction Accuracy</div>
+                </div>
+                <div>
+                    <span class="automation-status status-development">DEVELOPMENT</span>
+                </div>
+            </div>
+            <div class="automation-item">
+                <div>
+                    <strong>Self-Service Analytics</strong>
+                    <div style="color: #666; font-size: 0.875rem;">Natural language query interface</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #003A70;">Q1 2025</div>
+                    <div style="font-size: 0.75rem; color: #666;">Target Launch</div>
+                </div>
+                <div>
+                    <span class="automation-status status-planned">PLANNED</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Cost Savings Achievement -->
+        <div class="cost-savings">
+            <h3 style="color: #00A650; margin-bottom: 1rem;">Operational Excellence Cost Savings</h3>
+            <div style="font-size: 3rem; font-weight: 700; color: #003A70; margin-bottom: 0.5rem;">$847K</div>
+            <div style="font-size: 1.125rem; color: #666; margin-bottom: 1rem;">Annual Run Rate Savings Achieved</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: left;">
+                <div>
+                    <strong>Automation:</strong> $342K<br>
+                    <span style="font-size: 0.875rem; color: #666;">Process automation</span>
+                </div>
+                <div>
+                    <strong>Infrastructure:</strong> $287K<br>
+                    <span style="font-size: 0.875rem; color: #666;">Cloud optimization</span>
+                </div>
+                <div>
+                    <strong>Efficiency:</strong> $156K<br>
+                    <span style="font-size: 0.875rem; color: #666;">Process improvement</span>
+                </div>
+                <div>
+                    <strong>Quality:</strong> $62K<br>
+                    <span style="font-size: 0.875rem; color: #666;">Defect reduction</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Incident & Problem Management -->
+        <section class="incident-tracker">
+            <h2 style="color: #003A70; margin-bottom: 1rem;">Incident & Problem Management<a href="#fn6" class="footnote-ref">⁶</a></h2>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <div>
+                    <canvas id="incident-trend" height="300"></canvas>
+                </div>
+                <div>
+                    <h3 style="color: #003A70; margin-bottom: 1rem;">Current Status</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <span class="severity-indicator sev-1"></span>
+                        <strong>Severity 1:</strong> 0 active<br>
+                        <span style="color: #666; font-size: 0.875rem; margin-left: 1.5rem;">MTTR: 47 min</span>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <span class="severity-indicator sev-2"></span>
+                        <strong>Severity 2:</strong> 2 active<br>
+                        <span style="color: #666; font-size: 0.875rem; margin-left: 1.5rem;">MTTR: 2.3 hours</span>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <span class="severity-indicator sev-3"></span>
+                        <strong>Severity 3:</strong> 7 active<br>
+                        <span style="color: #666; font-size: 0.875rem; margin-left: 1.5rem;">MTTR: 8.7 hours</span>
+                    </div>
+                    <div>
+                        <span class="severity-indicator sev-4"></span>
+                        <strong>Severity 4:</strong> 23 active<br>
+                        <span style="color: #666; font-size: 0.875rem; margin-left: 1.5rem;">MTTR: 2.1 days</span>
+                    </div>
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
+                        <strong>Root Cause Distribution:</strong><br>
+                        • Code defects: 34%<br>
+                        • Infrastructure: 28%<br>
+                        • Configuration: 23%<br>
+                        • External services: 15%
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Capacity Planning -->
+        <section style="margin-top: 2rem;">
+            <h2 style="color: #003A70; border-bottom: 2px solid #003A70; padding-bottom: 0.5rem;">
+                Capacity Planning & Resource Utilization<a href="#fn7" class="footnote-ref">⁷</a>
+            </h2>
+            <canvas id="capacity-chart" height="300"></canvas>
+        </section>
+        
+        <!-- Strategic Recommendations -->
+        <div class="recommendation-box">
+            <h3 style="color: white; margin-bottom: 1rem;">Operational Excellence Roadmap</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h4 style="color: #FFD100;">Q1 2025 Priorities</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 1.8;">
+                        <li>Complete predictive scaling rollout (-$200K/yr)</li>
+                        <li>Achieve 70% automation rate across core processes</li>
+                        <li>Reduce support ticket backlog to <100</li>
+                        <li>Implement AIOps for proactive monitoring</li>
+                    </ol>
+                </div>
+                <div>
+                    <h4 style="color: #FFD100;">2025 Transformation Goals</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 1.8;">
+                        <li>Achieve 99.99% uptime (four nines)</li>
+                        <li>Reduce operational costs by 25%</li>
+                        <li>100% SLA compliance across all metrics</li>
+                        <li>Zero-touch operations for routine tasks</li>
+                    </ol>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                <strong style="color: #FFD100;">Expected Impact:</strong> $1.2M annual cost savings, 40% efficiency improvement, 
+                15% headcount reallocation to strategic initiatives. ROI: 287% over 24 months.
+            </div>
+        </div>
+        
+        <!-- Footnotes -->
+        <div class="footnotes">
+            <h3 style="font-size: 0.875rem; color: #003A70; margin-bottom: 1rem;">Data Sources & Methodology</h3>
+            <p>
+                <span id="fn1">¹</span> <strong>Real-time Operational Metrics:</strong> Data collected from monitoring systems 
+                (Datadog, PagerDuty, CloudWatch) with 1-minute granularity. Uptime calculated excluding planned maintenance windows. 
+                Response times are p50 measurements. Deploy frequency from CI/CD pipeline (Jenkins/GitHub Actions).
+            </p>
+            <p>
+                <span id="fn2">²</span> <strong>SLA Performance:</strong> Contractual service level agreements tracked via ServiceNow. 
+                Uptime = (Total Time - Downtime) / Total Time × 100. First response measured from ticket creation to first agent response. 
+                Resolution time from ticket open to closed-resolved status. CSAT from post-interaction surveys.
+            </p>
+            <p>
+                <span id="fn3">³</span> <strong>Process Efficiency:</strong> Cycle time measured end-to-end from process initiation to 
+                completion. Efficiency score = (Value-Added Time / Total Cycle Time) × 100. Automation percentage based on steps 
+                requiring no human intervention. Cost per transaction includes labor, systems, and overhead allocation.
+            </p>
+            <p>
+                <span id="fn4">⁴</span> <strong>Team Performance Metrics:</strong> Engineering velocity from Jira story points completed. 
+                Utilization = (Productive Hours / Available Hours) × 100. Quality scores from defect rates and code review metrics. 
+                Customer Success metrics from Zendesk and internal tracking systems.
+            </p>
+            <p>
+                <span id="fn5">⁵</span> <strong>Automation Progress:</strong> ROI calculations based on time saved × fully loaded hourly cost. 
+                Implementation costs amortized over 3 years. Success metrics tracked post-deployment for minimum 90 days. 
+                All automation initiatives approved by Operations Committee.
+            </p>
+            <p>
+                <span id="fn6">⁶</span> <strong>Incident Management:</strong> Severity levels defined in incident response playbook. 
+                MTTR (Mean Time To Resolve) calculated from incident start to resolution confirmation. Root cause analysis performed 
+                for all Sev 1-2 incidents. Data from PagerDuty and post-mortem reports.
+            </p>
+            <p>
+                <span id="fn7">⁷</span> <strong>Capacity Planning:</strong> Resource utilization from cloud provider metrics and APM tools. 
+                Forecasting uses linear regression with seasonal adjustments. Buffer capacity maintained at 30% for peak loads. 
+                Cost optimization recommendations from AWS Trusted Advisor and manual analysis.
+            </p>
+            <p style="margin-top: 1rem; font-style: italic;">
+                <strong>Operational Standards:</strong> All metrics align with ITIL v4 framework. Continuous improvement driven by 
+                Lean Six Sigma methodologies. Monthly operational reviews with executive team. Real-time dashboards available at 
+                ops-dashboard.company.com (internal access only).
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Incident Trend Chart
+        const incidentCtx = document.getElementById('incident-trend').getContext('2d');
+        new Chart(incidentCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 42', 'Week 43', 'Week 44', 'Week 45', 'Week 46', 'Week 47'],
+                datasets: [{
+                    label: 'Sev 1',
+                    data: [2, 1, 0, 1, 0, 0],
+                    borderColor: '#E30613',
+                    backgroundColor: 'rgba(227, 6, 19, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }, {
+                    label: 'Sev 2',
+                    data: [5, 4, 3, 4, 3, 2],
+                    borderColor: '#FF6900',
+                    backgroundColor: 'rgba(255, 105, 0, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }, {
+                    label: 'Sev 3',
+                    data: [12, 10, 11, 9, 8, 7],
+                    borderColor: '#FFD100',
+                    backgroundColor: 'rgba(255, 209, 0, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }, {
+                    label: 'Sev 4',
+                    data: [34, 31, 29, 27, 25, 23],
+                    borderColor: '#666',
+                    borderWidth: 2,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Weekly Incident Trend by Severity',
+                        font: { size: 16, weight: 'bold' },
+                        color: '#003A70'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Incidents'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Capacity Planning Chart
+        const capacityCtx = document.getElementById('capacity-chart').getContext('2d');
+        new Chart(capacityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Compute', 'Storage', 'Network', 'Database', 'Cache', 'Queue'],
+                datasets: [{
+                    label: 'Current Usage',
+                    data: [78, 62, 45, 71, 83, 54],
+                    backgroundColor: '#003A70'
+                }, {
+                    label: 'Projected (3mo)',
+                    data: [85, 71, 52, 78, 89, 61],
+                    backgroundColor: '#00A650'
+                }, {
+                    label: 'Capacity Limit',
+                    data: [100, 100, 100, 100, 100, 100],
+                    backgroundColor: 'rgba(227, 6, 19, 0.3)',
+                    type: 'line',
+                    borderColor: '#E30613',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Infrastructure Capacity Utilization (%)',
+                        font: { size: 16, weight: 'bold' },
+                        color: '#003A70'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 120,
+                        title: {
+                            display: true,
+                            text: 'Utilization %'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
